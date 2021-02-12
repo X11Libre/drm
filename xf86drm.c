@@ -102,6 +102,7 @@
 
 #ifdef __OpenBSD__
 #define NO_MKNOD
+#define X_PRIVSEP
 #endif
 
 #if defined(__OpenBSD__) || defined(__DragonFly__)
@@ -827,6 +828,18 @@ static const char *drmGetDeviceName(int type)
     return NULL;
 }
 
+#ifdef X_PRIVSEP
+static int
+_priv_open_device(const char *path)
+{
+	drmMsg("_priv_open_device\n");
+	return open(path, O_RDWR);
+}
+
+drm_public int priv_open_device(const char *)
+	__attribute__((weak, alias ("_priv_open_device")));
+#endif
+
 /**
  * Open the DRM device, creating it if necessary.
  *
@@ -913,7 +926,11 @@ wait_for_udev:
     }
 #endif
 
+#ifndef X_PRIVSEP
     fd = open(buf, O_RDWR | O_CLOEXEC);
+#else
+    fd = priv_open_device(buf);
+#endif
     drmMsg("drmOpenDevice: open result is %d, (%s)\n",
            fd, fd < 0 ? strerror(errno) : "OK");
     if (fd >= 0)
@@ -971,8 +988,13 @@ static int drmOpenMinor(int minor, int create, int type)
         return -EINVAL;
 
     sprintf(buf, dev_name, DRM_DIR_NAME, minor);
-    if ((fd = open(buf, O_RDWR | O_CLOEXEC)) >= 0)
-        return fd;
+#ifndef X_PRIVSEP
+    fd = open(buf, O_RDWR | O_CLOEXEC);
+#else
+    fd = priv_open_device(buf);
+#endif
+    if (fd >= 0)
+	return fd;
     return -errno;
 }
 
