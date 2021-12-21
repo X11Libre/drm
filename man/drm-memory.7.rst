@@ -74,8 +74,7 @@ by the kernel. *handle* is a 32-bit gem handle that identifies the buffer. This
 is used by several other calls that take a gem-handle or memory-buffer as
 argument. The *pitch* field is the pitch (or stride) of the new buffer. Most
 drivers use 32-bit or 64-bit aligned stride-values. The size field contains the
-absolute size in bytes of the buffer. This can normally also be computed with
-``(height * pitch + width) * bpp / 4``.
+absolute size in bytes of the buffer. 
 
 To prepare the buffer for **mmap**\ (2) you need to use the
 ``DRM_IOCTL_MODE_MAP_DUMB`` ioctl. It takes as argument a structure of type
