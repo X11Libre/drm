@@ -3610,7 +3610,7 @@ static int get_sysctl_pci_bus_info(int maj, int min, drmPciBusInfoPtr info)
     char sysctl_val[256];
     size_t sysctl_len;
     int id, type, nelem;
-    unsigned int rdev, majmin, domain, bus, dev, func;
+    unsigned int rdev, domain, bus, dev, func;
 
     rdev = makedev(maj, min);
     if (!devname_r(rdev, S_IFCHR, dname, sizeof(dname)))
