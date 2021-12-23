@@ -163,7 +163,7 @@ static struct msm_cmd * ring_cmd_new(struct fd_ringbuffer *ring, uint32_t size,
 			suballoc_offset = fd_ringbuffer_size(msm_pipe->suballoc_ring) +
 					suballoc_ring->offset;
 
-			suballoc_offset = ALIGN(suballoc_offset, 0x10);
+			suballoc_offset = DRM_ALIGN(suballoc_offset, 0x10);
 
 			if ((size + suballoc_offset) > suballoc_bo->size) {
 				suballoc_bo = NULL;

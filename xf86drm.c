@@ -4006,7 +4006,7 @@ static drmDevicePtr drmDeviceAlloc(unsigned int type, const char *node,
     unsigned int i;
     char *ptr;
 
-    max_node_length = ALIGN(drmGetMaxNodeName(), sizeof(void *));
+    max_node_length = DRM_ALIGN(drmGetMaxNodeName(), sizeof(void *));
     extra = DRM_NODE_MAX * (sizeof(void *) + max_node_length);
 
     size = sizeof(*device) + extra + bus_size + device_size;

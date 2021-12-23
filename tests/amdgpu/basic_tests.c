@@ -589,7 +589,7 @@ int amdgpu_bo_alloc_and_map_raw(amdgpu_device_handle dev, unsigned size,
 	if (r)
 		goto error_va_alloc;
 
-	r = amdgpu_bo_va_op_raw(dev, buf_handle, 0,  ALIGN(size, getpagesize()), vmc_addr,
+	r = amdgpu_bo_va_op_raw(dev, buf_handle, 0,  DRM_ALIGN(size, getpagesize()), vmc_addr,
 				   AMDGPU_VM_PAGE_READABLE |
 				   AMDGPU_VM_PAGE_WRITEABLE |
 				   AMDGPU_VM_PAGE_EXECUTABLE |

@@ -202,7 +202,7 @@ static void alloc_resource(struct amdgpu_uvd_enc_bo *uvd_enc_bo,
 	uint64_t va = 0;
 	int r;
 
-	req.alloc_size = ALIGN(size, 4096);
+	req.alloc_size = DRM_ALIGN(size, 4096);
 	req.preferred_heap = domain;
 	r = amdgpu_bo_alloc(device_handle, &req, &buf_handle);
 	CU_ASSERT_EQUAL(r, 0);
@@ -331,7 +331,7 @@ static void amdgpu_cs_uvd_enc_encode(void)
 	uint64_t luma_offset, chroma_offset;
 	uint32_t vbuf_size, bs_size = 0x003f4800, cpb_size;
 	unsigned align = (family_id >= AMDGPU_FAMILY_AI) ? 256 : 16;
-	vbuf_size = ALIGN(enc.width, align) * ALIGN(enc.height, 16) * 1.5;
+	vbuf_size = DRM_ALIGN(enc.width, align) * DRM_ALIGN(enc.height, 16) * 1.5;
 	cpb_size = vbuf_size * 10;
 
 
@@ -352,11 +352,11 @@ static void amdgpu_cs_uvd_enc_encode(void)
 	memset(enc.vbuf.ptr, 0, vbuf_size);
 	for (i = 0; i < enc.height; ++i) {
 		memcpy(enc.vbuf.ptr, (frame + i * enc.width), enc.width);
-		enc.vbuf.ptr += ALIGN(enc.width, align);
+		enc.vbuf.ptr += DRM_ALIGN(enc.width, align);
 	}
 	for (i = 0; i < enc.height / 2; ++i) {
 		memcpy(enc.vbuf.ptr, ((frame + enc.height * enc.width) + i * enc.width), enc.width);
-		enc.vbuf.ptr += ALIGN(enc.width, align);
+		enc.vbuf.ptr += DRM_ALIGN(enc.width, align);
 	}
 
 	r = amdgpu_bo_cpu_unmap(enc.vbuf.handle);
@@ -429,7 +429,7 @@ static void amdgpu_cs_uvd_enc_encode(void)
 	memcpy((ib_cpu + len), uve_rc_per_pic, sizeof(uve_rc_per_pic));
 	len += sizeof(uve_rc_per_pic) / 4;
 
-	unsigned luma_size = ALIGN(enc.width, align) * ALIGN(enc.height, 16);
+	unsigned luma_size = DRM_ALIGN(enc.width, align) * DRM_ALIGN(enc.height, 16);
 	luma_offset = enc.vbuf.addr;
 	chroma_offset = luma_offset + luma_size;
 	ib_cpu[len++] = 0x00000054;
@@ -441,8 +441,8 @@ static void amdgpu_cs_uvd_enc_encode(void)
 	ib_cpu[len++] = chroma_offset >> 32;
 	ib_cpu[len++] = chroma_offset;
 	memcpy((ib_cpu + len), uve_encode_param, sizeof(uve_encode_param));
-	ib_cpu[len] = ALIGN(enc.width, align);
-	ib_cpu[len + 1] = ALIGN(enc.width, align);
+	ib_cpu[len] = DRM_ALIGN(enc.width, align);
+	ib_cpu[len + 1] = DRM_ALIGN(enc.width, align);
 	len += sizeof(uve_encode_param) / 4;
 
 	memcpy((ib_cpu + len), uve_op_speed_enc_mode, sizeof(uve_op_speed_enc_mode));

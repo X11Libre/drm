@@ -286,7 +286,7 @@ static void alloc_resource(struct amdgpu_jpeg_bo *jpeg_bo, unsigned size,
 	uint64_t va = 0;
 	int r;
 
-	req.alloc_size = ALIGN(size, 4096);
+	req.alloc_size = DRM_ALIGN(size, 4096);
 	req.preferred_heap = domain;
 	r = amdgpu_bo_alloc(device_handle, &req, &buf_handle);
 	CU_ASSERT_EQUAL(r, 0);

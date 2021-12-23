@@ -164,7 +164,7 @@ fd_bo_cache_alloc(struct fd_bo_cache *cache, uint32_t *size, uint32_t flags)
 	struct fd_bo *bo = NULL;
 	struct fd_bo_bucket *bucket;
 
-	*size = ALIGN(*size, 4096);
+	*size = DRM_ALIGN(*size, 4096);
 	bucket = get_bucket(cache, *size);
 
 	/* see if we can be green and recycle: */

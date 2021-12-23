@@ -266,7 +266,7 @@ static void alloc_resource(struct amdgpu_vcn_bo *vcn_bo,
 	uint64_t va = 0;
 	int r;
 
-	req.alloc_size = ALIGN(size, 4096);
+	req.alloc_size = DRM_ALIGN(size, 4096);
 	req.preferred_heap = domain;
 	r = amdgpu_bo_alloc(device_handle, &req, &buf_handle);
 	CU_ASSERT_EQUAL(r, 0);
@@ -360,9 +360,9 @@ static void amdgpu_cs_vcn_dec_decode(void)
 	size = 4*1024; /* msg */
 	size += 4*1024; /* fb */
 	size += 4096; /*it_scaling_table*/
-	size += ALIGN(sizeof(uvd_bitstream), 4*1024);
-	size += ALIGN(dpb_size, 4*1024);
-	size += ALIGN(dt_size, 4*1024);
+	size += DRM_ALIGN(sizeof(uvd_bitstream), 4*1024);
+	size += DRM_ALIGN(dpb_size, 4*1024);
+	size += DRM_ALIGN(dt_size, 4*1024);
 
 	num_resources  = 0;
 	alloc_resource(&dec_buf, size, AMDGPU_GEM_DOMAIN_GTT);
@@ -386,17 +386,17 @@ static void amdgpu_cs_vcn_dec_decode(void)
 	dec += 4*1024;
 	memcpy(dec, uvd_bitstream, sizeof(uvd_bitstream));
 
-	dec += ALIGN(sizeof(uvd_bitstream), 4*1024);
+	dec += DRM_ALIGN(sizeof(uvd_bitstream), 4*1024);
 
-	dec += ALIGN(dpb_size, 4*1024);
+	dec += DRM_ALIGN(dpb_size, 4*1024);
 
 	msg_addr = dec_buf.addr;
 	fb_addr = msg_addr + 4*1024;
 	it_addr = fb_addr + 4*1024;
 	bs_addr = it_addr + 4*1024;
-	dpb_addr = ALIGN(bs_addr + sizeof(uvd_bitstream), 4*1024);
-	ctx_addr = ALIGN(dpb_addr + 0x006B9400, 4*1024);
-	dt_addr = ALIGN(dpb_addr + dpb_size, 4*1024);
+	dpb_addr = DRM_ALIGN(bs_addr + sizeof(uvd_bitstream), 4*1024);
+	ctx_addr = DRM_ALIGN(dpb_addr + 0x006B9400, 4*1024);
+	dt_addr = DRM_ALIGN(dpb_addr + dpb_size, 4*1024);
 
 	len = 0;
 	vcn_dec_cmd(msg_addr, 0x0, &len);
