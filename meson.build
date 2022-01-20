@@ -243,6 +243,10 @@ endforeach
 # all c args:
 libdrm_c_args = warn_c_args + ['-fvisibility=hidden']
 
+if not cc.has_argument('-fvisibility=hidden')
+  error('libdrm needs a compiler with `-fvisibility=hidden` support')
+endif
+
 
 dep_pciaccess = dependency('pciaccess', version : '>= 0.10', required : with_intel)
 dep_cunit = dependency('cunit', version : '>= 2.1', required : false)
