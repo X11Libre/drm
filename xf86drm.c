@@ -4598,60 +4598,6 @@ drm_device_has_rdev(drmDevicePtr device, dev_t find_rdev)
  */
 drm_public int drmGetDeviceFromDevId(dev_t find_rdev, uint32_t flags, drmDevicePtr *device)
 {
-#ifdef __OpenBSD__
-    /*
-     * DRI device nodes on OpenBSD are not in their own directory, they reside
-     * in /dev along with a large number of statically generated /dev nodes.
-     * Avoid stat'ing all of /dev needlessly by implementing this custom path.
-     */
-    drmDevicePtr     d;
-    char             node[PATH_MAX + 1];
-    const char      *dev_name;
-    int              node_type, subsystem_type;
-    int              maj, min, n, ret;
-    const int        max_node_length = ALIGN(drmGetMaxNodeName(), sizeof(void *));
-    struct stat      sbuf;
-
-    if (device == NULL)
-        return -EINVAL;
-
-    maj = major(find_rdev);
-    min = minor(find_rdev);
-
-    if (!drmNodeIsDRM(maj, min))
-        return -EINVAL;
-
-    node_type = drmGetMinorType(maj, min);
-    if (node_type == -1)
-        return -ENODEV;
-
-    dev_name = drmGetDeviceName(node_type);
-    if (!dev_name)
-        return -EINVAL;
-
-    /* anything longer than this will be truncated in drmDeviceAlloc.
-     * Account for NULL byte
-     */
-    n = snprintf(node, PATH_MAX, dev_name, DRM_DIR_NAME, min);
-    if (n == -1 || n >= PATH_MAX)
-      return -errno;
-    if (n + 1 > max_node_length)
-        return -EINVAL;
-    if (stat(node, &sbuf))
-        return -EINVAL;
-
-    subsystem_type = drmParseSubsystemType(maj, min);
-    if (subsystem_type != DRM_BUS_PCI)
-        return -ENODEV;
-
-    ret = drmProcessPciDevice(&d, node, node_type, maj, min, true, flags);
-    if (ret)
-        return ret;
-
-    *device = d;
-
-    return 0;
-#else
     drmDevicePtr local_devices[MAX_DRM_NODES];
     drmDevicePtr d;
     DIR *sysdir;
@@ -4715,7 +4661,6 @@ drm_public int drmGetDeviceFromDevId(dev_t find_rdev, uint32_t flags, drmDeviceP
     if (*device == NULL)
         return -ENODEV;
     return 0;
-#endif
 }
 
 drm_public int drmGetNodeTypeFromDevId(dev_t devid)
