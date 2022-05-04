@@ -261,6 +261,8 @@ drmGetAfbcFormatModifierNameFromArm(uint64_t modifier, FILE *fp)
 static bool
 drmGetAfrcFormatModifierNameFromArm(uint64_t modifier, FILE *fp)
 {
+    bool scan_layout;
+
     for (unsigned int i = 0; i < 2; ++i) {
         uint64_t coding_unit_block =
           (modifier >> (i * 4)) & AFRC_FORMAT_MOD_CU_SIZE_MASK;
@@ -292,7 +294,7 @@ drmGetAfrcFormatModifierNameFromArm(uint64_t modifier, FILE *fp)
         }
     }
 
-    bool scan_layout =
+    scan_layout =
         (modifier & AFRC_FORMAT_MOD_LAYOUT_SCAN) == AFRC_FORMAT_MOD_LAYOUT_SCAN;
     if (scan_layout) {
         fprintf(fp, "SCAN");
@@ -962,6 +964,8 @@ static int drmGetMinorBase(int type)
 
 static int drmGetMinorType(int major, int minor)
 {
+    int type = minor >> 6;
+
 #ifdef __FreeBSD__
     char name[SPECNAMELEN];
     int id;
@@ -982,7 +986,6 @@ static int drmGetMinorType(int major, int minor)
 
     minor = id;
 #endif
-    int type = minor >> 6;
 
     if (minor < 0)
         return -1;
@@ -3607,7 +3610,7 @@ static int get_sysctl_pci_bus_info(int maj, int min, drmPciBusInfoPtr info)
     char sysctl_val[256];
     size_t sysctl_len;
     int id, type, nelem;
-    unsigned int rdev, majmin, domain, bus, dev, func;
+    unsigned int rdev, domain, bus, dev, func;
 
     rdev = makedev(maj, min);
     if (!devname_r(rdev, S_IFCHR, dname, sizeof(dname)))
@@ -4003,7 +4006,7 @@ static drmDevicePtr drmDeviceAlloc(unsigned int type, const char *node,
     unsigned int i;
     char *ptr;
 
-    max_node_length = ALIGN(drmGetMaxNodeName(), sizeof(void *));
+    max_node_length = DRM_ALIGN(drmGetMaxNodeName(), sizeof(void *));
     extra = DRM_NODE_MAX * (sizeof(void *) + max_node_length);
 
     size = sizeof(*device) + extra + bus_size + device_size;

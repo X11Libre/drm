@@ -108,7 +108,7 @@ amdgpu_vamgr_find_va(struct amdgpu_bo_va_mgr *mgr, uint64_t size,
 
 
 	alignment = MAX2(alignment, mgr->va_alignment);
-	size = ALIGN(size, mgr->va_alignment);
+	size = DRM_ALIGN(size, mgr->va_alignment);
 
 	if (base_required % alignment)
 		return -EINVAL;
@@ -172,7 +172,7 @@ amdgpu_vamgr_free_va(struct amdgpu_bo_va_mgr *mgr, uint64_t va, uint64_t size)
 	if (va == AMDGPU_INVALID_VA_ADDRESS)
 		return;
 
-	size = ALIGN(size, mgr->va_alignment);
+	size = DRM_ALIGN(size, mgr->va_alignment);
 
 	pthread_mutex_lock(&mgr->bo_va_mutex);
 	hole = container_of(&mgr->va_holes, hole, list);
@@ -250,7 +250,7 @@ drm_public int amdgpu_va_range_alloc(amdgpu_device_handle dev,
 	}
 
 	va_base_alignment = MAX2(va_base_alignment, vamgr->va_alignment);
-	size = ALIGN(size, vamgr->va_alignment);
+	size = DRM_ALIGN(size, vamgr->va_alignment);
 
 	ret = amdgpu_vamgr_find_va(vamgr, size,
 				   va_base_alignment, va_base_required,

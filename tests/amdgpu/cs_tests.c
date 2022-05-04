@@ -286,9 +286,9 @@ static void amdgpu_cs_uvd_decode(void)
 	req.alloc_size += 4*1024; /* fb */
 	if (family_id >= AMDGPU_FAMILY_VI)
 		req.alloc_size += 4096; /*it_scaling_table*/
-	req.alloc_size += ALIGN(sizeof(uvd_bitstream), 4*1024);
-	req.alloc_size += ALIGN(dpb_size, 4*1024);
-	req.alloc_size += ALIGN(dt_size, 4*1024);
+	req.alloc_size += DRM_ALIGN(sizeof(uvd_bitstream), 4*1024);
+	req.alloc_size += DRM_ALIGN(dpb_size, 4*1024);
+	req.alloc_size += DRM_ALIGN(dt_size, 4*1024);
 
 	req.preferred_heap = AMDGPU_GEM_DOMAIN_GTT;
 
@@ -342,10 +342,10 @@ static void amdgpu_cs_uvd_decode(void)
 	ptr += 4*1024;
 	memcpy(ptr, uvd_bitstream, sizeof(uvd_bitstream));
 
-	ptr += ALIGN(sizeof(uvd_bitstream), 4*1024);
+	ptr += DRM_ALIGN(sizeof(uvd_bitstream), 4*1024);
 	memset(ptr, 0, dpb_size);
 
-	ptr += ALIGN(dpb_size, 4*1024);
+	ptr += DRM_ALIGN(dpb_size, 4*1024);
 	memset(ptr, 0, dt_size);
 
 	num_resources = 0;
@@ -359,18 +359,18 @@ static void amdgpu_cs_uvd_decode(void)
 		bs_addr = it_addr + 4*1024;
 	} else
 		bs_addr = fb_addr + 4*1024;
-	dpb_addr = ALIGN(bs_addr + sizeof(uvd_bitstream), 4*1024);
+	dpb_addr = DRM_ALIGN(bs_addr + sizeof(uvd_bitstream), 4*1024);
 
 	ctx_addr = 0;
 	if (family_id >= AMDGPU_FAMILY_VI) {
 		if ((family_id == AMDGPU_FAMILY_AI) ||
 		    (chip_id == chip_rev+0x50 || chip_id == chip_rev+0x5A ||
 		     chip_id == chip_rev+0x64)) {
-			ctx_addr = ALIGN(dpb_addr + 0x006B9400, 4*1024);
+			ctx_addr = DRM_ALIGN(dpb_addr + 0x006B9400, 4*1024);
 		}
 	}
 
-	dt_addr = ALIGN(dpb_addr + dpb_size, 4*1024);
+	dt_addr = DRM_ALIGN(dpb_addr + dpb_size, 4*1024);
 
 	i = 0;
 	uvd_cmd(msg_addr, 0x0, &i);

@@ -754,7 +754,7 @@ drm_public int amdgpu_bo_va_op(amdgpu_bo_handle bo,
 {
 	amdgpu_device_handle dev = bo->dev;
 
-	size = ALIGN(size, getpagesize());
+	size = DRM_ALIGN(size, getpagesize());
 
 	return amdgpu_bo_va_op_raw(dev, bo, offset, size, addr,
 				   AMDGPU_VM_PAGE_READABLE |

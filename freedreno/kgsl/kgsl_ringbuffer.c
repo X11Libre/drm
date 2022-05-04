@@ -75,7 +75,7 @@ static struct kgsl_rb_bo * kgsl_rb_bo_new(struct kgsl_pipe *pipe, uint32_t size)
 {
 	struct kgsl_rb_bo *bo;
 	struct kgsl_gpumem_alloc req = {
-			.size = ALIGN(size, 4096),
+			.size = DRM_ALIGN(size, 4096),
 			.flags = KGSL_MEMFLAGS_GPUREADONLY,
 	};
 	int ret;
