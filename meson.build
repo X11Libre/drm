@@ -344,6 +344,7 @@ install_headers(
   'include/drm/savage_drm.h', 'include/drm/sis_drm.h',
   'include/drm/tegra_drm.h', 'include/drm/vc4_drm.h',
   'include/drm/via_drm.h', 'include/drm/virtgpu_drm.h',
+  'include/drm/nvidia_drm.h',
   subdir : 'libdrm',
 )
 if with_vmwgfx
