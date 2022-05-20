@@ -123,6 +123,16 @@ if _nouveau != 'false'
 endif
 summary('Nouveau', with_nouveau)
 
+with_nvidia = false
+_nvidia = get_option('nvidia')
+if _nvidia != 'false'
+  if _nvidia == 'true' and not with_atomics
+    error('libdrm_nvidia requires atomics.')
+  endif
+  with_nvidia = true
+endif
+summary('Nvidia', with_nvidia)
+
 with_vmwgfx = false
 _vmwgfx = get_option('vmwgfx')
 if _vmwgfx != 'false'
@@ -387,6 +397,9 @@ if with_vc4
 endif
 if with_etnaviv
   subdir('etnaviv')
+endif
+if with_nvidia
+  subdir('nvidia')
 endif
 if with_man_pages
   subdir('man')

@@ -1,0 +1,5 @@
+LIBDRM_NOUVEAU_FILES := \
+	nvidia.c \
+
+LIBDRM_NOUVEAU_H_FILES := \
+	nvidia.h
