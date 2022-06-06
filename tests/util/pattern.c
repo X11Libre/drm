@@ -548,6 +548,67 @@ static void fill_smpte_yuv_packed(const struct util_yuv_info *yuv, void *mem,
 	}
 }
 
+static void fill_smpte_rgb8(const struct util_rgb_info *rgb, void *mem,
+			     unsigned int width, unsigned int height,
+			     unsigned int stride)
+{
+	const uint8_t colors_top[] = {
+		MAKE_RGBA(rgb, 192, 192, 192, 255),	/* grey */
+		MAKE_RGBA(rgb, 192, 192, 0, 255),	/* yellow */
+		MAKE_RGBA(rgb, 0, 192, 192, 255),	/* cyan */
+		MAKE_RGBA(rgb, 0, 192, 0, 255),		/* green */
+		MAKE_RGBA(rgb, 192, 0, 192, 255),	/* magenta */
+		MAKE_RGBA(rgb, 192, 0, 0, 255),		/* red */
+		MAKE_RGBA(rgb, 0, 0, 192, 255),		/* blue */
+	};
+	const uint8_t colors_middle[] = {
+		MAKE_RGBA(rgb, 0, 0, 192, 127),		/* blue */
+		MAKE_RGBA(rgb, 19, 19, 19, 127),	/* black */
+		MAKE_RGBA(rgb, 192, 0, 192, 127),	/* magenta */
+		MAKE_RGBA(rgb, 19, 19, 19, 127),	/* black */
+		MAKE_RGBA(rgb, 0, 192, 192, 127),	/* cyan */
+		MAKE_RGBA(rgb, 19, 19, 19, 127),	/* black */
+		MAKE_RGBA(rgb, 192, 192, 192, 127),	/* grey */
+	};
+	const uint8_t colors_bottom[] = {
+		MAKE_RGBA(rgb, 0, 33, 76, 255),		/* in-phase */
+		MAKE_RGBA(rgb, 255, 255, 255, 255),	/* super white */
+		MAKE_RGBA(rgb, 50, 0, 106, 255),	/* quadrature */
+		MAKE_RGBA(rgb, 19, 19, 19, 255),	/* black */
+		MAKE_RGBA(rgb, 9, 9, 9, 255),		/* 3.5% */
+		MAKE_RGBA(rgb, 19, 19, 19, 255),	/* 7.5% */
+		MAKE_RGBA(rgb, 29, 29, 29, 255),	/* 11.5% */
+		MAKE_RGBA(rgb, 19, 19, 19, 255),	/* black */
+	};
+	unsigned int x;
+	unsigned int y;
+
+	for (y = 0; y < height * 6 / 9; ++y) {
+		for (x = 0; x < width; ++x)
+			((uint8_t *)mem)[x] = colors_top[x * 7 / width];
+		mem += stride;
+	}
+
+	for (; y < height * 7 / 9; ++y) {
+		for (x = 0; x < width; ++x)
+			((uint8_t *)mem)[x] = colors_middle[x * 7 / width];
+		mem += stride;
+	}
+
+	for (; y < height; ++y) {
+		for (x = 0; x < width * 5 / 7; ++x)
+			((uint8_t *)mem)[x] =
+				colors_bottom[x * 4 / (width * 5 / 7)];
+		for (; x < width * 6 / 7; ++x)
+			((uint8_t *)mem)[x] =
+				colors_bottom[(x - width * 5 / 7) * 3
+					      / (width / 7) + 4];
+		for (; x < width; ++x)
+			((uint8_t *)mem)[x] = colors_bottom[7];
+		mem += stride;
+	}
+}
+
 static void fill_smpte_rgb16(const struct util_rgb_info *rgb, void *mem,
 			     unsigned int width, unsigned int height,
 			     unsigned int stride, bool fb_be)
@@ -1259,6 +1320,11 @@ static void fill_smpte(const struct util_format_info *info, void *planes[3],
 		return fill_smpte_yuv_planar(&info->yuv, planes[0], planes[2],
 					     planes[1], width, height, stride);
 
+	case DRM_FORMAT_RGB332:
+	case DRM_FORMAT_BGR233:
+		return fill_smpte_rgb8(&info->rgb, planes[0],
+					width, height, stride);
+
 	case DRM_FORMAT_ARGB4444:
 	case DRM_FORMAT_XRGB4444:
 	case DRM_FORMAT_ABGR4444:
@@ -1537,6 +1603,32 @@ static void fill_tiles_yuv_packed(const struct util_format_info *info,
 	}
 }
 
+static void fill_tiles_rgb8(const struct util_format_info *info, void *mem,
+			     unsigned int width, unsigned int height,
+			     unsigned int stride)
+{
+	const struct util_rgb_info *rgb = &info->rgb;
+	void *mem_base = mem;
+	unsigned int x, y;
+
+	for (y = 0; y < height; ++y) {
+		for (x = 0; x < width; ++x) {
+			div_t d = div(x+y, width);
+			uint32_t rgb32 = 0x00130502 * (d.quot >> 6)
+				       + 0x000a1120 * (d.rem >> 6);
+			uint8_t color =
+				MAKE_RGBA(rgb, (rgb32 >> 16) & 0xff,
+					  (rgb32 >> 8) & 0xff, rgb32 & 0xff,
+					  255);
+
+			((uint8_t *)mem)[x] = color;
+		}
+		mem += stride;
+	}
+
+	make_pwetty(mem_base, width, height, stride, info->format);
+}
+
 static void fill_tiles_rgb16(const struct util_format_info *info, void *mem,
 			     unsigned int width, unsigned int height,
 			     unsigned int stride, bool fb_be)
@@ -1679,6 +1771,11 @@ static void fill_tiles(const struct util_format_info *info, void *planes[3],
 	case DRM_FORMAT_YVU444:
 		return fill_tiles_yuv_planar(info, planes[0], planes[2],
 					     planes[1], width, height, stride);
+
+	case DRM_FORMAT_RGB332:
+	case DRM_FORMAT_BGR233:
+		return fill_tiles_rgb8(info, planes[0],
+					width, height, stride);
 
 	case DRM_FORMAT_ARGB4444:
 	case DRM_FORMAT_XRGB4444:
