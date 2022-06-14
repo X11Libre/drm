@@ -246,13 +246,13 @@ drm_public int amdgpu_cs_query_reset_state2(amdgpu_context_handle context,
  * \param   dev - \c [in]  Device handle
  * \param   context - \c [in]  GPU Context
  * \param   ibs_request - \c [in]  Pointer to submission requests
- * \param   fence - \c [out] return fence for this submission
+ * \param   gang  - \c [in] if true different IP ib's can be passed
  *
  * \return  0 on success otherwise POSIX Error code
  * \sa amdgpu_cs_submit()
 */
 static int amdgpu_cs_submit_one(amdgpu_context_handle context,
-				struct amdgpu_cs_request *ibs_request)
+                                struct amdgpu_cs_request *ibs_request, int gang)
 {
 	struct drm_amdgpu_cs_chunk *chunks;
 	struct drm_amdgpu_cs_chunk_data *chunk_data;
@@ -289,19 +289,26 @@ static int amdgpu_cs_submit_one(amdgpu_context_handle context,
 	num_chunks = ibs_request->number_of_ibs;
 	/* IB chunks */
 	for (i = 0; i < ibs_request->number_of_ibs; i++) {
-		struct amdgpu_cs_ib_info *ib;
+		struct amdgpu_cs_ib_info_gang *ib;
 		chunks[i].chunk_id = AMDGPU_CHUNK_ID_IB;
 		chunks[i].length_dw = sizeof(struct drm_amdgpu_cs_chunk_ib) / 4;
 		chunks[i].chunk_data = (uint64_t)(uintptr_t)&chunk_data[i];
 
-		ib = &ibs_request->ibs[i];
+		if (gang) {
+			ib = &ibs_request->ibs_gang[i];
+			chunk_data[i].ib_data.ip_type = ib->ip_type;
+			chunk_data[i].ib_data.ip_instance = ib->ip_instance;
+			chunk_data[i].ib_data.ring = ib->ring;
+		} else {
+			ib = (struct amdgpu_cs_ib_info_gang*)&ibs_request->ibs[i];
+			chunk_data[i].ib_data.ip_type = ibs_request->ip_type;
+			chunk_data[i].ib_data.ip_instance = ibs_request->ip_instance;
+			chunk_data[i].ib_data.ring = ibs_request->ring;
+		}
 
 		chunk_data[i].ib_data._pad = 0;
 		chunk_data[i].ib_data.va_start = ib->ib_mc_address;
 		chunk_data[i].ib_data.ib_bytes = ib->size * 4;
-		chunk_data[i].ib_data.ip_type = ibs_request->ip_type;
-		chunk_data[i].ib_data.ip_instance = ibs_request->ip_instance;
-		chunk_data[i].ib_data.ring = ibs_request->ring;
 		chunk_data[i].ib_data.flags = ib->flags;
 	}
 
@@ -405,7 +412,29 @@ drm_public int amdgpu_cs_submit(amdgpu_context_handle context,
 
 	r = 0;
 	for (i = 0; i < number_of_requests; i++) {
-		r = amdgpu_cs_submit_one(context, ibs_request);
+		r = amdgpu_cs_submit_one(context, ibs_request, false);
+		if (r)
+			break;
+		ibs_request++;
+	}
+
+	return r;
+}
+
+drm_public int amdgpu_cs_submit_gang(amdgpu_context_handle context,
+				uint64_t flags,
+				struct amdgpu_cs_request *ibs_request,
+				uint32_t number_of_requests)
+{
+	uint32_t i;
+	int r;
+
+	if (!context || !ibs_request)
+		return -EINVAL;
+
+	r = 0;
+	for (i = 0; i < number_of_requests; i++) {
+		r = amdgpu_cs_submit_one(context, ibs_request, true);
 		if (r)
 			break;
 		ibs_request++;
