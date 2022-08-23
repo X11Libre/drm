@@ -101,7 +101,7 @@
 #define DRM_MAJOR 226 /* Linux */
 #endif
 
-#if defined(__OpenBSD__) || defined(__DragonFly__)
+#if defined(__OpenBSD__) || defined(__DragonFly__) || defined(__FreeBSD__)
 struct drm_pciinfo {
 	uint16_t	domain;
 	uint8_t		bus;
@@ -3685,7 +3685,7 @@ static int drmParsePciBusInfo(int maj, int min, drmPciBusInfoPtr info)
     info->func = func;
 
     return 0;
-#elif defined(__OpenBSD__) || defined(__DragonFly__)
+#elif defined(__OpenBSD__) || defined(__DragonFly__) || defined(__FreeBSD__)
     struct drm_pciinfo pinfo;
     int fd, type;
 
@@ -3693,13 +3693,27 @@ static int drmParsePciBusInfo(int maj, int min, drmPciBusInfoPtr info)
     if (type == -1)
         return -ENODEV;
 
+#if defined(__FreeBSD__)
+    char name[SPECNAMELEN], path[PATH_MAX];
+    int id;
+
+    if (!devname_r(makedev(maj, min), S_IFCHR, name, sizeof(name)))
+        return -1;
+    snprintf(path, PATH_MAX, "/dev/%s", name);
+    fd = open(path, O_RDWR | O_CLOEXEC);
+#else
     fd = drmOpenMinor(min, 0, type);
+#endif
     if (fd < 0)
         return -errno;
 
     if (drmIoctl(fd, DRM_IOCTL_GET_PCIINFO, &pinfo)) {
         close(fd);
+#if defined(__FreeBSD__)
+        return get_sysctl_pci_bus_info(maj, min, info);
+#else
         return -errno;
+#endif
     }
     close(fd);
 
@@ -3709,8 +3723,6 @@ static int drmParsePciBusInfo(int maj, int min, drmPciBusInfoPtr info)
     info->func = pinfo.func;
 
     return 0;
-#elif defined(__FreeBSD__)
-    return get_sysctl_pci_bus_info(maj, min, info);
 #else
 #warning "Missing implementation of drmParsePciBusInfo"
     return -EINVAL;
@@ -3857,7 +3869,7 @@ static int drmParsePciDeviceInfo(int maj, int min,
         return parse_config_sysfs_file(maj, min, device);
 
     return 0;
-#elif defined(__OpenBSD__) || defined(__DragonFly__)
+#elif defined(__OpenBSD__) || defined(__DragonFly__) || defined(__FreeBSD__)
     struct drm_pciinfo pinfo;
     int fd, type;
 
@@ -3865,13 +3877,67 @@ static int drmParsePciDeviceInfo(int maj, int min,
     if (type == -1)
         return -ENODEV;
 
+#if defined(__FreeBSD__)
+    char name[SPECNAMELEN], path[PATH_MAX];
+    int id;
+
+    if (!devname_r(makedev(maj, min), S_IFCHR, name, sizeof(name)))
+        return -1;
+    snprintf(path, PATH_MAX, "/dev/%s", name);
+    fd = open(path, O_RDWR | O_CLOEXEC);
+#else
     fd = drmOpenMinor(min, 0, type);
+#endif
     if (fd < 0)
         return -errno;
 
     if (drmIoctl(fd, DRM_IOCTL_GET_PCIINFO, &pinfo)) {
         close(fd);
+#if defined(__FreeBSD__)
+        drmPciBusInfo info;
+        struct pci_conf_io pc;
+        struct pci_match_conf patterns[1];
+        struct pci_conf results[1];
+        int error;
+
+        if (get_sysctl_pci_bus_info(maj, min, &info) != 0)
+            return -EINVAL;
+
+        fd = open("/dev/pci", O_RDONLY, 0);
+        if (fd < 0)
+            return -errno;
+
+        bzero(&patterns, sizeof(patterns));
+        patterns[0].pc_sel.pc_domain = info.domain;
+        patterns[0].pc_sel.pc_bus = info.bus;
+        patterns[0].pc_sel.pc_dev = info.dev;
+        patterns[0].pc_sel.pc_func = info.func;
+        patterns[0].flags = PCI_GETCONF_MATCH_DOMAIN | PCI_GETCONF_MATCH_BUS
+                          | PCI_GETCONF_MATCH_DEV | PCI_GETCONF_MATCH_FUNC;
+        bzero(&pc, sizeof(struct pci_conf_io));
+        pc.num_patterns = 1;
+        pc.pat_buf_len = sizeof(patterns);
+        pc.patterns = patterns;
+        pc.match_buf_len = sizeof(results);
+        pc.matches = results;
+
+        if (ioctl(fd, PCIOCGETCONF, &pc) || pc.status == PCI_GETCONF_ERROR) {
+            error = errno;
+            close(fd);
+            return -error;
+        }
+        close(fd);
+
+        device->vendor_id = results[0].pc_vendor;
+        device->device_id = results[0].pc_device;
+        device->subvendor_id = results[0].pc_subvendor;
+        device->subdevice_id = results[0].pc_subdevice;
+        device->revision_id = results[0].pc_revid;
+
+        return 0;
+#else
         return -errno;
+#endif
     }
     close(fd);
 
@@ -3880,48 +3946,6 @@ static int drmParsePciDeviceInfo(int maj, int min,
     device->revision_id = pinfo.revision_id;
     device->subvendor_id = pinfo.subvendor_id;
     device->subdevice_id = pinfo.subdevice_id;
-
-    return 0;
-#elif defined(__FreeBSD__)
-    drmPciBusInfo info;
-    struct pci_conf_io pc;
-    struct pci_match_conf patterns[1];
-    struct pci_conf results[1];
-    int fd, error;
-
-    if (get_sysctl_pci_bus_info(maj, min, &info) != 0)
-        return -EINVAL;
-
-    fd = open("/dev/pci", O_RDONLY, 0);
-    if (fd < 0)
-        return -errno;
-
-    bzero(&patterns, sizeof(patterns));
-    patterns[0].pc_sel.pc_domain = info.domain;
-    patterns[0].pc_sel.pc_bus = info.bus;
-    patterns[0].pc_sel.pc_dev = info.dev;
-    patterns[0].pc_sel.pc_func = info.func;
-    patterns[0].flags = PCI_GETCONF_MATCH_DOMAIN | PCI_GETCONF_MATCH_BUS
-                      | PCI_GETCONF_MATCH_DEV | PCI_GETCONF_MATCH_FUNC;
-    bzero(&pc, sizeof(struct pci_conf_io));
-    pc.num_patterns = 1;
-    pc.pat_buf_len = sizeof(patterns);
-    pc.patterns = patterns;
-    pc.match_buf_len = sizeof(results);
-    pc.matches = results;
-
-    if (ioctl(fd, PCIOCGETCONF, &pc) || pc.status == PCI_GETCONF_ERROR) {
-        error = errno;
-        close(fd);
-        return -error;
-    }
-    close(fd);
-
-    device->vendor_id = results[0].pc_vendor;
-    device->device_id = results[0].pc_device;
-    device->subvendor_id = results[0].pc_subvendor;
-    device->subdevice_id = results[0].pc_subdevice;
-    device->revision_id = results[0].pc_revid;
 
     return 0;
 #else
