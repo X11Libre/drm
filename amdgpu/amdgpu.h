@@ -1870,6 +1870,18 @@ int amdgpu_vm_reserve_vmid(amdgpu_device_handle dev, uint32_t flags);
 */
 int amdgpu_vm_unreserve_vmid(amdgpu_device_handle dev, uint32_t flags);
 
+/**
+ * Get a DRM render node FD Returns a duplicate of the render node file descriptor used by the device.
+ * It is the caller's responsibility to close this file descriptor when it is
+ * no longer needed.
+ *
+ * \param dev - \c [in]  Opaque device handle returned by amdgpu_device_initialize
+ *
+ * \return  render node file descriptor on success\n
+ *          <0 - Negative POSIX error code
+ */
+int amdgpu_device_dup_fd(amdgpu_device_handle dev);
+
 #ifdef __cplusplus
 }
 #endif
