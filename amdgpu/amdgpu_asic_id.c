@@ -112,10 +112,16 @@ void amdgpu_parse_asic_ids(struct amdgpu_device *dev)
 	ssize_t n;
 	int line_num = 1;
 	int r = 0;
+	const char *amdgpu_asic_id_table_path = getenv("AMDGPU_ASIC_ID_TABLE_PATH");
 
-	fp = fopen(AMDGPU_ASIC_ID_TABLE, "r");
+	if (amdgpu_asic_id_table_path == NULL || amdgpu_asic_id_table_path[0] == '\0') {
+		amdgpu_asic_id_table_path = AMDGPU_ASIC_ID_TABLE;
+	}
+
+	fp = fopen(amdgpu_asic_id_table_path, "r");
+
 	if (!fp) {
-		fprintf(stderr, "%s: %s\n", AMDGPU_ASIC_ID_TABLE,
+		fprintf(stderr, "%s: %s\n", amdgpu_asic_id_table_path,
 			strerror(errno));
 		return;
 	}
@@ -132,7 +138,7 @@ void amdgpu_parse_asic_ids(struct amdgpu_device *dev)
 			continue;
 		}
 
-		drmMsg("%s version: %s\n", AMDGPU_ASIC_ID_TABLE, line);
+		drmMsg("%s version: %s\n", amdgpu_asic_id_table_path, line);
 		break;
 	}
 
@@ -150,7 +156,7 @@ void amdgpu_parse_asic_ids(struct amdgpu_device *dev)
 
 	if (r == -EINVAL) {
 		fprintf(stderr, "Invalid format: %s: line %d: %s\n",
-			AMDGPU_ASIC_ID_TABLE, line_num, line);
+			amdgpu_asic_id_table_path, line_num, line);
 	} else if (r && r != -EAGAIN) {
 		fprintf(stderr, "%s: Cannot parse ASIC IDs: %s\n",
 			__func__, strerror(-r));
