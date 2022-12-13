@@ -165,6 +165,8 @@ drm_private int amdgpu_query_gpu_info_init(amdgpu_device_handle dev)
 	dev->info.ce_ram_size = dev->dev_info.ce_ram_size;
 	dev->info.vce_harvest_config = dev->dev_info.vce_harvest_config;
 	dev->info.pci_rev_id = dev->dev_info.pci_rev;
+	dev->info.min_engine_clk = dev->dev_info.min_engine_clock;
+	dev->info.min_memory_clk = dev->dev_info.min_memory_clock;
 
 	if (dev->info.family_id < AMDGPU_FAMILY_AI) {
 		for (i = 0; i < (int)dev->info.num_shader_engines; i++) {
