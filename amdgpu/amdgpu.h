@@ -43,6 +43,7 @@ extern "C" {
 
 struct drm_amdgpu_info_hw_ip;
 struct drm_amdgpu_bo_list_entry;
+struct drm_amdgpu_userq_mqd_gfx;
 
 /*--------------------------------------------------------------------------*/
 /* --------------------------- Defines ------------------------------------ */
@@ -1869,6 +1870,28 @@ int amdgpu_vm_reserve_vmid(amdgpu_device_handle dev, uint32_t flags);
  * \return  0 on success otherwise POSIX Error code
 */
 int amdgpu_vm_unreserve_vmid(amdgpu_device_handle dev, uint32_t flags);
+
+/**
+ * Create USERQUEUE
+ * \param   dev		- \c [in] device handle
+ * \param   mqd		- \c [in]  MQD data
+ * \param   ip_type	- \c [in]  ip type
+ * \param   queue_id	- \c [out]  queue id
+ *
+ * \return  0 on success otherwise POSIX Error code
+ */
+int amdgpu_create_userq_gfx(amdgpu_device_handle dev,
+			struct drm_amdgpu_userq_mqd_gfx *mqd,
+			uint32_t ip_type,
+			uint32_t *queue_id);
+/**
+ * Free USERQUEUE
+ * \param   dev		- \c [in] device handle
+ * \param   queue_id	- \c [in]  queue id
+ *
+ * \return  0 on success otherwise POSIX Error code
+ */
+int amdgpu_free_userq_gfx(amdgpu_device_handle dev, uint32_t queue_id);
 
 #ifdef __cplusplus
 }
