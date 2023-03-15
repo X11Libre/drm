@@ -48,6 +48,8 @@
 #define WRITE_DATA_ENGINE_SEL(x)	((x) << 30)
 #define  WRITE_DATA_CACHE_POLICY(x)	((x) << 25)
 
+#define DOORBELL_INDEX			4
+
 struct amdgpu_userq_bo {
 	amdgpu_bo_handle handle;
 	amdgpu_va_handle va_handle;
@@ -100,14 +102,35 @@ int suite_userq_tests_clean(void)
 		return CUE_SCLEAN_FAILED;
 }
 
+static void alloc_doorbell(struct amdgpu_userq_bo *userq_bo,
+			   unsigned size, unsigned domain)
+{
+	struct amdgpu_bo_alloc_request req = {0};
+	amdgpu_bo_handle buf_handle;
+	int r;
+
+	req.alloc_size = ALIGN(size, PAGE_SIZE);
+	req.preferred_heap = domain;
+	r = amdgpu_bo_alloc(device_handle, &req, &buf_handle);
+	CU_ASSERT_EQUAL(r, 0);
+
+	userq_bo->handle = buf_handle;
+	userq_bo->size = req.alloc_size;
+
+	r = amdgpu_bo_cpu_map(userq_bo->handle, (void **)&userq_bo->ptr);
+	CU_ASSERT_EQUAL(r, 0);
+
+	return;
+}
+
 static void amdgpu_userqueue(void)
 {
 	int r, i = 0;
 	struct drm_amdgpu_userq_mqd_gfx mqd;
 	uint32_t *ptr, *newptr;
 	uint32_t q_id;
-	struct  amdgpu_userq_bo queue, dstptr, shadow;
-	uint64_t gtt_flags = 0;
+	struct  amdgpu_userq_bo queue, dstptr, shadow, doorbell;
+	uint64_t gtt_flags = 0, *doorbell_ptr;
 
 	amdgpu_bo_alloc_and_map(device_handle, USERMODE_QUEUE_SIZE + 8 + 8,
 				ALIGNMENT,
@@ -132,11 +155,18 @@ static void amdgpu_userqueue(void)
 				&shadow.mc_addr, &shadow.va_handle);
 	CU_ASSERT_EQUAL(r, 0);
 
+	alloc_doorbell(&doorbell, PAGE_SIZE, AMDGPU_GEM_DOMAIN_DOORBELL);
+
 	mqd.queue_va = queue.mc_addr;
 	mqd.rptr_va = queue.mc_addr + USERMODE_QUEUE_SIZE;
 	mqd.wptr_va = queue.mc_addr + USERMODE_QUEUE_SIZE + 8;
 	mqd.shadow_va = shadow.mc_addr;
 	mqd.queue_size = USERMODE_QUEUE_SIZE;
+
+	mqd.doorbell_handle = doorbell.handle->handle;
+	mqd.doorbell_offset = DOORBELL_INDEX;
+
+	doorbell_ptr = (uint64_t *)doorbell.ptr;
 
 	newptr = (uint32_t *)dstptr.ptr;
 	memset(newptr, 0, sizeof(*newptr));
@@ -159,6 +189,8 @@ static void amdgpu_userqueue(void)
 	ptr[6] = 0xdeadbeaf;
 	ptr[7] = 0xdeadbeaf;
 	ptr[8] = 0xdeadbeaf;
+
+	doorbell_ptr[DOORBELL_INDEX]  = 9;
 
 	while (!newptr[0]) {
 		//busy-loop untill destination in not updated.
@@ -183,6 +215,12 @@ err_free_queue:
 
 	r = amdgpu_bo_unmap_and_free(dstptr.handle, dstptr.va_handle,
 				     dstptr.mc_addr, PAGE_SIZE);
+	CU_ASSERT_EQUAL(r, 0);
+
+	r = amdgpu_bo_cpu_unmap(doorbell.handle);
+	CU_ASSERT_EQUAL(r, 0);
+
+	r = amdgpu_bo_free(doorbell.handle);
 	CU_ASSERT_EQUAL(r, 0);
 
 	r = amdgpu_bo_unmap_and_free(queue.handle, queue.va_handle,
