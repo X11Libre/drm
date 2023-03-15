@@ -102,6 +102,16 @@ int suite_userq_tests_clean(void)
 		return CUE_SCLEAN_FAILED;
 }
 
+void delay_micro(int micro_seconds)
+{
+	// Storing start time
+	clock_t start_time = clock();
+
+	// looping till required time is not achieved
+	while (clock() < start_time + micro_seconds)
+	;
+}
+
 static void alloc_doorbell(struct amdgpu_userq_bo *userq_bo,
 			   unsigned size, unsigned domain)
 {
@@ -189,6 +199,9 @@ static void amdgpu_userqueue(void)
 	ptr[6] = 0xdeadbeaf;
 	ptr[7] = 0xdeadbeaf;
 	ptr[8] = 0xdeadbeaf;
+
+	/* firmware needs 300us to 500us time to map the user queue */
+	delay_micro(300);
 
 	doorbell_ptr[DOORBELL_INDEX]  = 9;
 
