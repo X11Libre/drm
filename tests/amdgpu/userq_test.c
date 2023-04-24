@@ -1,0 +1,193 @@
+/*
+ * Copyright 2023 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "CUnit/Basic.h"
+
+#include "amdgpu_drm.h"
+#include "amdgpu_internal.h"
+#include "amdgpu_test.h"
+#include "util_math.h"
+
+#define PAGE_SIZE			4096
+#define USERMODE_QUEUE_SIZE		256
+#define ALIGNMENT			256
+
+#define PACKET_TYPE3			3
+#define PACKET3(op, n)			((PACKET_TYPE3 << 30) |  \
+					(((op) & 0xFF) << 8)  |  \
+					((n) & 0x3FFF) << 16)
+
+#define PACKET3_WRITE_DATA		0x37
+#define WR_CONFIRM			(1 << 20)
+#define WRITE_DATA_DST_SEL(x)		((x) << 8)
+#define WRITE_DATA_ENGINE_SEL(x)	((x) << 30)
+#define  WRITE_DATA_CACHE_POLICY(x)	((x) << 25)
+
+struct amdgpu_userq_bo {
+	amdgpu_bo_handle handle;
+	amdgpu_va_handle va_handle;
+	uint64_t mc_addr;
+	uint64_t size;
+	void *ptr;
+};
+
+static void amdgpu_userqueue(void);
+
+static amdgpu_device_handle device_handle;
+static uint32_t major_version;
+static uint32_t minor_version;
+
+CU_TestInfo userq_tests[] = {
+	{"Create UserQueue Test", amdgpu_userqueue},
+	CU_TEST_INFO_NULL,
+};
+
+CU_BOOL suite_userq_tests_enable(void)
+{
+	return CU_TRUE;
+}
+
+int suite_userq_tests_init(void)
+{
+	int r;
+
+	r = amdgpu_device_initialize(drm_amdgpu[0], &major_version,
+				     &minor_version, &device_handle);
+	if (r) {
+		if ((r == -EACCES) && (errno == EACCES))
+			printf("\n\nError:%s. "
+			       "Hint:Try to run this test program as root.",
+				strerror(errno));
+
+		return CUE_SINIT_FAILED;
+	}
+
+	return CUE_SUCCESS;
+}
+
+int suite_userq_tests_clean(void)
+{
+	int r = amdgpu_device_deinitialize(device_handle);
+
+	if (r == 0)
+		return CUE_SUCCESS;
+	else
+		return CUE_SCLEAN_FAILED;
+}
+
+static void amdgpu_userqueue(void)
+{
+	int r, i = 0;
+	struct drm_amdgpu_userq_mqd_gfx mqd;
+	uint32_t *ptr, *newptr;
+	uint32_t q_id;
+	struct  amdgpu_userq_bo queue, dstptr, shadow;
+	uint64_t gtt_flags = 0;
+
+	amdgpu_bo_alloc_and_map(device_handle, USERMODE_QUEUE_SIZE + 8 + 8,
+				ALIGNMENT,
+				AMDGPU_GEM_DOMAIN_GTT,
+				gtt_flags,
+				&queue.handle, &queue.ptr,
+				&queue.mc_addr, &queue.va_handle);
+	CU_ASSERT_EQUAL(r, 0);
+
+	amdgpu_bo_alloc_and_map(device_handle, USERMODE_QUEUE_SIZE,
+				ALIGNMENT,
+				AMDGPU_GEM_DOMAIN_VRAM,
+				gtt_flags,
+				&dstptr.handle, &dstptr.ptr,
+				&dstptr.mc_addr, &dstptr.va_handle);
+	CU_ASSERT_EQUAL(r, 0);
+
+	amdgpu_bo_alloc_and_map(device_handle, PAGE_SIZE * 4, PAGE_SIZE,
+				AMDGPU_GEM_DOMAIN_VRAM,
+				gtt_flags,
+				&shadow.handle, &shadow.ptr,
+				&shadow.mc_addr, &shadow.va_handle);
+	CU_ASSERT_EQUAL(r, 0);
+
+	mqd.queue_va = queue.mc_addr;
+	mqd.rptr_va = queue.mc_addr + USERMODE_QUEUE_SIZE;
+	mqd.wptr_va = queue.mc_addr + USERMODE_QUEUE_SIZE + 8;
+	mqd.shadow_va = shadow.mc_addr;
+	mqd.queue_size = USERMODE_QUEUE_SIZE;
+
+	newptr = (uint32_t *)dstptr.ptr;
+	memset(newptr, 0, sizeof(*newptr));
+
+	ptr = (uint32_t *)queue.ptr;
+	memset(ptr, 0, sizeof(*ptr));
+
+	/* Create the Usermode Queue */
+	r = amdgpu_create_userq_gfx(device_handle, &mqd, AMDGPU_HW_IP_GFX, &q_id);
+	CU_ASSERT_EQUAL(r, 0);
+	if (r)
+		goto err_free_queue;
+
+	ptr[0] = PACKET3(PACKET3_WRITE_DATA, 7);
+	ptr[1] = WRITE_DATA_DST_SEL(5) | WR_CONFIRM | WRITE_DATA_CACHE_POLICY(3);
+	ptr[2] = 0xfffffffc & (dstptr.mc_addr);
+	ptr[3] = (0xffffffff00000000 & (dstptr.mc_addr)) >> 32;
+	ptr[4] = 0xdeadbeaf;
+	ptr[5] = 0xdeadbeaf;
+	ptr[6] = 0xdeadbeaf;
+	ptr[7] = 0xdeadbeaf;
+	ptr[8] = 0xdeadbeaf;
+
+	while (!newptr[0]) {
+		//busy-loop untill destination in not updated.
+		printf("Destination is still not updated newptr[0] = %x\n",
+			newptr[0]);
+	}
+
+	i = 0;
+	while (i < 5) {
+		printf(" => newptr[%d] = %x\n", i, newptr[i]);
+		CU_ASSERT_EQUAL(newptr[i++], 0xdeadbeaf);
+	}
+
+	/* Free the Usermode Queue */
+	r = amdgpu_free_userq_gfx(device_handle, q_id);
+	CU_ASSERT_EQUAL(r, 0);
+
+err_free_queue:
+	r = amdgpu_bo_unmap_and_free(shadow.handle, shadow.va_handle,
+				     shadow.mc_addr, PAGE_SIZE*4);
+	CU_ASSERT_EQUAL(r, 0);
+
+	r = amdgpu_bo_unmap_and_free(dstptr.handle, dstptr.va_handle,
+				     dstptr.mc_addr, PAGE_SIZE);
+	CU_ASSERT_EQUAL(r, 0);
+
+	r = amdgpu_bo_unmap_and_free(queue.handle, queue.va_handle,
+				     queue.mc_addr, PAGE_SIZE);
+	CU_ASSERT_EQUAL(r, 0);
+
+	return;
+}
