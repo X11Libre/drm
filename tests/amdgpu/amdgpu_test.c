@@ -481,22 +481,31 @@ static int amdgpu_find_device(uint8_t bus, uint16_t dev)
 	return -1;
 }
 
-static void amdgpu_disable_suites()
+static int amdgpu_disable_suites()
 {
 	amdgpu_device_handle device_handle;
 	uint32_t major_version, minor_version, family_id;
 	drmDevicePtr devices[MAX_CARDS_SUPPORTED];
 	int i, drm_count;
 	int size = sizeof(suites_active_stat) / sizeof(suites_active_stat[0]);
+	int ret = 0;
 
-	if (amdgpu_device_initialize(drm_amdgpu[0], &major_version,
-				   &minor_version, &device_handle))
-		return;
+	ret = amdgpu_device_initialize(drm_amdgpu[0], &major_version,
+				   &minor_version, &device_handle);
+
+	if (ret) {
+		fprintf(stderr, "device initialize failed\n");
+		return ret;
+	}
 
 	family_id = device_handle->info.family_id;
 
-	if (amdgpu_device_deinitialize(device_handle))
-		return;
+	ret = amdgpu_device_deinitialize(device_handle);
+
+	if (ret) {
+		fprintf(stderr, "device deinitialize failed\n");
+		return ret;
+	}
 
 	drm_count = drmGetDevices2(0, devices, MAX_CARDS_SUPPORTED);
 
@@ -592,6 +601,8 @@ static void amdgpu_disable_suites()
 	if (drm_count < 2)
 		if (amdgpu_set_test_active(HOTUNPLUG_TESTS_STR, "Unplug with exported fence", CU_FALSE))
 			fprintf(stderr, "test deactivation failed - %s\n", CU_get_error_msg());
+
+	return 0;
 }
 
 int test_device_index;
@@ -823,7 +834,8 @@ int main(int argc, char **argv)
 	CU_basic_set_mode(CU_BRM_VERBOSE);
 
 	/* Disable suites and individual tests based on misc. conditions */
-	amdgpu_disable_suites();
+	if (amdgpu_disable_suites())
+		goto end;
 
 	/* Parse command line string */
 	opterr = 0;		/* Do not print error messages from getopt */
