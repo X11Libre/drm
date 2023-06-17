@@ -55,6 +55,8 @@ extern "C" {
 #define DRM_AMDGPU_FENCE_TO_HANDLE	0x14
 #define DRM_AMDGPU_SCHED		0x15
 #define DRM_AMDGPU_USERQ		0x16
+#define DRM_AMDGPU_USERQ_SIGNAL		0x17
+#define DRM_AMDGPU_USERQ_WAIT		0x18
 
 #define DRM_IOCTL_AMDGPU_GEM_CREATE	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_GEM_CREATE, union drm_amdgpu_gem_create)
 #define DRM_IOCTL_AMDGPU_GEM_MMAP	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_GEM_MMAP, union drm_amdgpu_gem_mmap)
@@ -73,6 +75,8 @@ extern "C" {
 #define DRM_IOCTL_AMDGPU_FENCE_TO_HANDLE DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_FENCE_TO_HANDLE, union drm_amdgpu_fence_to_handle)
 #define DRM_IOCTL_AMDGPU_SCHED		DRM_IOW(DRM_COMMAND_BASE + DRM_AMDGPU_SCHED, union drm_amdgpu_sched)
 #define DRM_IOCTL_AMDGPU_USERQ         DRM_IOW(DRM_COMMAND_BASE + DRM_AMDGPU_USERQ, union drm_amdgpu_userq)
+#define DRM_IOCTL_AMDGPU_USERQ_SIGNAL	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_USERQ_SIGNAL, union drm_amdgpu_userq_signal)
+#define DRM_IOCTL_AMDGPU_USERQ_WAIT	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_USERQ_WAIT, union drm_amdgpu_userq_wait)
 
 /**
  * DOC: memory domains
@@ -415,6 +419,51 @@ struct drm_amdgpu_userq_out {
 union drm_amdgpu_userq {
 	struct drm_amdgpu_userq_in in;
 	struct drm_amdgpu_userq_out out;
+};
+
+/* userq signal/wait ioctl */
+struct drm_amdgpu_userq_signal {
+	/** Queue ID */
+	__u32   queue_id;
+	/** Flags */
+	__u32   flags;
+	/** Sync obj handle */
+	__u32   syncobj_handle;
+	__u32   pad;
+	/* Sync obj timeline */
+	__u64   syncobj_point;
+	/** array of BO handles */
+	__u64   bo_handles_array;
+	/** number of BO handles */
+	__u32   num_bo_handles;
+	/** bo flags */
+	__u32 bo_flags;
+};
+
+struct drm_amdgpu_userq_fence_info {
+	/** gpu address to wait on */
+	__u64   va;
+	/** fence value to wait for */
+	__u64   value;
+};
+
+struct drm_amdgpu_userq_wait {
+	/** Flags */
+	__u32   flags;
+	/** bo flags */
+	__u32   bo_wait_flags;
+	/** array of Sync obj handles */
+	__u64   syncobj_handles_array;
+	/** array of BO handles */
+	__u64   bo_handles_array;
+	/** number of Sync obj handles */
+	__u32   num_syncobj_handles;
+	/** number of BO handles */
+	__u32   num_bo_handles;
+	/** array of addr/values */
+	__u64   userq_fence_info;
+	/** number of fences */
+	__u64   num_fences;
 };
 
 /*
