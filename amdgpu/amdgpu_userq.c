@@ -66,3 +66,54 @@ drm_public int amdgpu_free_userq_gfx(amdgpu_device_handle dev, uint32_t queue_id
 	return drmCommandWriteRead(dev->fd, DRM_AMDGPU_USERQ,
 				   &userq, sizeof(userq));
 }
+
+drm_public int amdgpu_userq_signal(amdgpu_device_handle dev,
+				   uint32_t queue_id,
+				   uint32_t syncobj_handle,
+				   uint64_t bo_handles_array,
+				   uint32_t num_bo_handles,
+				   uint32_t bo_flags)
+{
+	struct drm_amdgpu_userq_signal args;
+	int r;
+
+	memset(&args, 0, sizeof(args));
+	args.queue_id = queue_id;
+	args.syncobj_handle = syncobj_handle;
+	args.bo_handles_array = (uintptr_t)bo_handles_array;
+	args.num_bo_handles = num_bo_handles;
+	args.bo_flags = bo_flags;
+
+	r = drmCommandWriteRead(dev->fd, DRM_AMDGPU_USERQ_SIGNAL,
+				&args, sizeof(args));
+
+	return r;
+}
+
+drm_public int amdgpu_userq_wait(amdgpu_device_handle dev,
+				 uint64_t syncobj_handles_array,
+				 uint32_t num_syncobj_handles,
+				 uint64_t bo_handles_array,
+				 uint32_t num_bo_handles,
+				 uint64_t *userq_fence_info,
+				 uint64_t *num_fences,
+				 uint32_t bo_wait_flags)
+{
+	struct drm_amdgpu_userq_wait args;
+	int r;
+
+	memset(&args, 0, sizeof(args));
+	args.syncobj_handles_array = (uintptr_t)syncobj_handles_array;
+	args.num_syncobj_handles = num_syncobj_handles;
+	args.bo_handles_array = (uintptr_t)bo_handles_array;
+	args.num_bo_handles = num_bo_handles;
+	args.userq_fence_info = (uintptr_t)userq_fence_info;
+	args.num_fences = *num_fences;
+	args.bo_wait_flags = bo_wait_flags;
+
+	r = drmCommandWriteRead(dev->fd, DRM_AMDGPU_USERQ_WAIT,
+				&args, sizeof(args));
+        *num_fences = args.num_fences;
+
+	return r;
+}

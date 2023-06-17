@@ -1893,6 +1893,46 @@ int amdgpu_create_userq_gfx(amdgpu_device_handle dev,
  */
 int amdgpu_free_userq_gfx(amdgpu_device_handle dev, uint32_t queue_id);
 
+/**
+ * Signal USERQUEUE
+ * \param   dev              - \c [in] device handle
+ * \param   queue_id         - \c [in] queue id
+ * \param   syncobj_handle   - \c [in] syncobj handle
+ * \param   bo_handles_array - \c [in] array of bo handles
+ * \param   num_bo_handles   - \c [in] number of bo handles
+ * \param   bo_flags         - \c [in] bo flags
+ *
+ * \return  0 on success otherwise POSIX Error code
+ */
+int amdgpu_userq_signal(amdgpu_device_handle dev,
+			uint32_t queue_id,
+			uint32_t syncobj_handle,
+			uint64_t bo_handles_array,
+			uint32_t num_bo_handles,
+			uint32_t bo_flags);
+
+/**
+ * Wait USERQUEUE
+ * \param   dev                     - \c [in] device handle
+ * \param   syncobj_handles_array   - \c [in] array of syncobj handles
+ * \param   num_syncobj_handles     - \c [in] number of syncobj handles
+ * \param   bo_handles_array        - \c [in] array of bo handles
+ * \param   num_bo_handles          - \c [in] number of bo handles
+ * \param   userq_fence_info        - \c [out] array of fence info objects
+ * \param   num_fences              - \c [in/out] number of fences
+ * \param   bo_wait_flags           - \c [in] bo wait flags
+ *
+ * \return  0 on success otherwise POSIX Error code
+ */
+int amdgpu_userq_wait(amdgpu_device_handle dev,
+		      uint64_t syncobj_handles_array,
+		      uint32_t num_syncobj_handles,
+		      uint64_t bo_handles_array,
+		      uint32_t num_bo_handles,
+		      uint64_t *userq_fence_info,
+		      uint64_t *num_fences,
+		      uint32_t bo_wait_flags);
+
 #ifdef __cplusplus
 }
 #endif
