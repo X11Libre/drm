@@ -302,6 +302,26 @@ CU_BOOL suite_security_tests_enable(void);
  */
 extern CU_TestInfo security_tests[];
 
+/**
+ * Initialize usermode queue test suite
+ */
+int suite_userq_tests_init(void);
+
+/**
+ * Deinitialize usermode queue test suite
+ */
+int suite_userq_tests_clean(void);
+
+/**
+ * Tests in usermode queue test suite
+ */
+extern CU_TestInfo userq_tests[];
+
+/**
+ * Decide if the suite is enabled by default or not.
+ */
+CU_BOOL suite_userq_tests_enable(void);
+
 extern void
 amdgpu_command_submission_write_linear_helper_with_secure(amdgpu_device_handle
 							  device,
