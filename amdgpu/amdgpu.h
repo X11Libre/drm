@@ -487,6 +487,10 @@ struct amdgpu_gpu_info {
 	uint32_t vce_harvest_config;
 	/* PCI revision ID */
 	uint32_t pci_rev_id;
+	/* minimum engine clock*/
+	uint64_t min_engine_clk;
+	/* minimum memory clock */
+	uint64_t min_memory_clk;
 };
 
 
