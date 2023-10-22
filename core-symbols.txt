@@ -38,6 +38,7 @@ drmDelContextTag
 drmDestroyContext
 drmDestroyDrawable
 drmDevicesEqual
+drmDevicesQueryAffinity
 drmDMA
 drmDropMaster
 drmError

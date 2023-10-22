@@ -920,6 +920,7 @@ extern int drmGetDevices2(uint32_t flags, drmDevicePtr devices[], int max_device
 extern int drmGetDeviceFromDevId(dev_t dev_id, uint32_t flags, drmDevicePtr *device);
 
 extern int drmDevicesEqual(drmDevicePtr a, drmDevicePtr b);
+extern int drmDevicesQueryAffinity(drmDevice *a, drmDevice *b);
 
 extern int drmSyncobjCreate(int fd, uint32_t flags, uint32_t *handle);
 extern int drmSyncobjDestroy(int fd, uint32_t handle);
