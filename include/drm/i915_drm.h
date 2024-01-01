@@ -2230,7 +2230,7 @@ struct i915_context_engines_load_balance {
 	__u64 mbz64; /* reserved for future use; must be zero */
 
 	struct i915_engine_class_instance engines[];
-} __attribute__((packed));
+};
 
 #define I915_DEFINE_CONTEXT_ENGINES_LOAD_BALANCE(name__, N__) struct { \
 	struct i915_user_extension base; \
@@ -2268,7 +2268,7 @@ struct i915_context_engines_bond {
 	__u64 mbz64[4]; /* reserved for future use; must be zero */
 
 	struct i915_engine_class_instance engines[];
-} __attribute__((packed));
+};
 
 #define I915_DEFINE_CONTEXT_ENGINES_BOND(name__, N__) struct { \
 	struct i915_user_extension base; \
@@ -2395,8 +2395,7 @@ struct i915_context_engines_parallel_submit {
 	 * index = j + i * num_siblings
 	 */
 	struct i915_engine_class_instance engines[];
-
-} __attribute__((packed));
+};
 
 #define I915_DEFINE_CONTEXT_ENGINES_PARALLEL_SUBMIT(name__, N__) struct { \
 	struct i915_user_extension base; \
@@ -2470,7 +2469,7 @@ struct i915_context_param_engines {
 #define I915_CONTEXT_ENGINES_EXT_BOND 1 /* see i915_context_engines_bond */
 #define I915_CONTEXT_ENGINES_EXT_PARALLEL_SUBMIT 2 /* see i915_context_engines_parallel_submit */
 	struct i915_engine_class_instance engines[0];
-} __attribute__((packed));
+};
 
 #define I915_DEFINE_CONTEXT_PARAM_ENGINES(name__, N__) struct { \
 	__u64 extensions; \
