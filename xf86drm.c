@@ -4464,6 +4464,27 @@ free_device:
     return ret;
 }
 
+static void
+device_get_boot_vga(drmDevicePtr device, int maj, int min)
+{
+#ifdef __linux__
+    char path[PATH_MAX + 1];
+    FILE *fp;
+
+    snprintf(path, sizeof(path), "/sys/dev/char/%d:%d/device/boot_vga",
+             maj, min);
+
+    fp = fopen(path, "r");
+    if (!fp)
+        return;
+
+    fscanf(fp, "%d", &(device->boot_vga));
+    fclose(fp);
+#else
+#warning "Platform is missing boot_vga support"
+#endif
+}
+
 static int
 process_device(drmDevicePtr *device, const char *d_name,
                int req_subsystem_type,
@@ -4471,7 +4492,7 @@ process_device(drmDevicePtr *device, const char *d_name,
 {
     struct stat sbuf;
     char node[PATH_MAX + 1];
-    int node_type, subsystem_type;
+    int node_type, subsystem_type, ret;
     unsigned int maj, min;
 
     node_type = drmGetNodeType(d_name);
@@ -4498,20 +4519,29 @@ process_device(drmDevicePtr *device, const char *d_name,
     switch (subsystem_type) {
     case DRM_BUS_PCI:
     case DRM_BUS_VIRTIO:
-        return drmProcessPciDevice(device, node, node_type, maj, min,
-                                   fetch_deviceinfo, flags);
+        ret = drmProcessPciDevice(device, node, node_type, maj, min,
+                                  fetch_deviceinfo, flags);
+        break;
     case DRM_BUS_USB:
-        return drmProcessUsbDevice(device, node, node_type, maj, min,
-                                   fetch_deviceinfo, flags);
+        ret = drmProcessUsbDevice(device, node, node_type, maj, min,
+                                  fetch_deviceinfo, flags);
+        break;
     case DRM_BUS_PLATFORM:
-        return drmProcessPlatformDevice(device, node, node_type, maj, min,
-                                        fetch_deviceinfo, flags);
+        ret = drmProcessPlatformDevice(device, node, node_type, maj, min,
+                                       fetch_deviceinfo, flags);
+        break;
     case DRM_BUS_HOST1X:
-        return drmProcessHost1xDevice(device, node, node_type, maj, min,
-                                      fetch_deviceinfo, flags);
+        ret = drmProcessHost1xDevice(device, node, node_type, maj, min,
+                                     fetch_deviceinfo, flags);
+        break;
     default:
         return -1;
-   }
+    }
+    if (flags & DRM_DEVICE_GET_BOOT_VGA)
+        /* Fetching the boot_vga status is not fatal */
+        device_get_boot_vga(*device, maj, min);
+
+    return ret;
 }
 
 /* Consider devices located on the same bus as duplicate and fold the respective
@@ -4540,7 +4570,8 @@ static void drmFoldDuplicatedDevices(drmDevicePtr local_devices[], int count)
 static int
 drm_device_validate_flags(uint32_t flags)
 {
-        return (flags & ~DRM_DEVICE_GET_PCI_REVISION);
+    return (flags & ~(DRM_DEVICE_GET_PCI_REVISION |
+                      DRM_DEVICE_GET_BOOT_VGA));
 }
 
 static bool

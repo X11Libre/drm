@@ -33,9 +33,17 @@
 
 
 static void
-print_device_info(drmDevicePtr device, int i, bool print_revision)
+print_device_info(drmDevicePtr device, int i, uint32_t flags)
 {
+    bool print_revision = flags & DRM_DEVICE_GET_PCI_REVISION;
+    bool print_boot_vga = flags & DRM_DEVICE_GET_BOOT_VGA;
+
     printf("device[%i]\n", i);
+    if (print_boot_vga)
+        printf("+-> boot_vga %d\n", device->boot_vga);
+    else
+        printf("+-> boot_vga IGNORED\n");
+
     printf("+-> available_nodes %#04x\n", device->available_nodes);
     printf("+-> nodes\n");
     for (int j = 0; j < DRM_NODE_MAX; j++)
@@ -110,6 +118,7 @@ main(void)
     drmDevicePtr *devices;
     drmDevicePtr device;
     int fd, ret, max_devices;
+    uint32_t flags = 0;
 
     printf("--- Checking the number of DRM device available ---\n");
     max_devices = drmGetDevices2(0, NULL, 0);
@@ -129,7 +138,7 @@ main(void)
     }
 
     printf("--- Retrieving devices information (PCI device revision is ignored) ---\n");
-    ret = drmGetDevices2(0, devices, max_devices);
+    ret = drmGetDevices2(flags, devices, max_devices);
     if (ret < 0) {
         printf("drmGetDevices2() returned an error %d\n", ret);
         free(devices);
@@ -137,7 +146,7 @@ main(void)
     }
 
     for (int i = 0; i < ret; i++) {
-        print_device_info(devices[i], i, false);
+        print_device_info(devices[i], i, flags);
 
         for (int j = 0; j < DRM_NODE_MAX; j++) {
             if (devices[i]->available_nodes & 1 << j) {
@@ -149,8 +158,9 @@ main(void)
                 }
 
                 printf("--- Retrieving device info, for node %s ---\n", devices[i]->nodes[j]);
-                if (drmGetDevice2(fd, DRM_DEVICE_GET_PCI_REVISION, &device) == 0) {
-                    print_device_info(device, i, true);
+                flags = DRM_DEVICE_GET_PCI_REVISION | DRM_DEVICE_GET_BOOT_VGA;
+                if (drmGetDevice2(fd, flags, &device) == 0) {
+                    print_device_info(device, i, flags);
                     drmFreeDevice(&device);
                 }
                 close(fd);

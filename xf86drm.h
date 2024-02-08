@@ -905,6 +905,7 @@ typedef struct _drmDevice {
         drmPlatformDeviceInfoPtr platform;
         drmHost1xDeviceInfoPtr host1x;
     } deviceinfo;
+    int boot_vga; /* 0 if platform the lacks support, or parsing fails */
 } drmDevice, *drmDevicePtr;
 
 extern int drmGetDevice(int fd, drmDevicePtr *device);
@@ -914,6 +915,7 @@ extern int drmGetDevices(drmDevicePtr devices[], int max_devices);
 extern void drmFreeDevices(drmDevicePtr devices[], int count);
 
 #define DRM_DEVICE_GET_PCI_REVISION (1 << 0)
+#define DRM_DEVICE_GET_BOOT_VGA (1 << 1)
 extern int drmGetDevice2(int fd, uint32_t flags, drmDevicePtr *device);
 extern int drmGetDevices2(uint32_t flags, drmDevicePtr devices[], int max_devices);
 
