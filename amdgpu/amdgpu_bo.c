@@ -422,7 +422,7 @@ drm_public void amdgpu_bo_inc_ref(amdgpu_bo_handle bo)
 	atomic_inc(&bo->refcount);
 }
 
-drm_public int amdgpu_bo_cpu_map(amdgpu_bo_handle bo, void **cpu)
+drm_public int amdgpu_bo_cpu_map(amdgpu_bo_handle bo, void* addr, int flags, void **cpu)
 {
 	union drm_amdgpu_gem_mmap args;
 	void *ptr;
@@ -455,7 +455,7 @@ drm_public int amdgpu_bo_cpu_map(amdgpu_bo_handle bo, void **cpu)
 	}
 
 	/* Map the buffer. */
-	ptr = drm_mmap(NULL, bo->alloc_size, PROT_READ | PROT_WRITE, MAP_SHARED,
+	ptr = drm_mmap(addr, bo->alloc_size, PROT_READ | PROT_WRITE, flags | MAP_SHARED,
 		       bo->dev->fd, args.out.addr_ptr);
 	if (ptr == MAP_FAILED) {
 		pthread_mutex_unlock(&bo->cpu_access_mutex);

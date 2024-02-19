@@ -756,7 +756,7 @@ void amdgpu_bo_inc_ref(amdgpu_bo_handle bo);
  * \sa amdgpu_bo_cpu_unmap()
  *
 */
-int amdgpu_bo_cpu_map(amdgpu_bo_handle buf_handle, void **cpu);
+int amdgpu_bo_cpu_map(amdgpu_bo_handle buf_handle, void* addr, int flags, void **cpu);
 
 /**
  * Release CPU access to GPU memory

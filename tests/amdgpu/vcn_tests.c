@@ -448,7 +448,7 @@ static void alloc_resource(struct amdgpu_vcn_bo *vcn_bo,
 	vcn_bo->handle = buf_handle;
 	vcn_bo->size = req.alloc_size;
 	vcn_bo->va_handle = va_handle;
-	r = amdgpu_bo_cpu_map(vcn_bo->handle, (void **)&vcn_bo->ptr);
+	r = amdgpu_bo_cpu_map(vcn_bo->handle, NULL, 0, (void **)&vcn_bo->ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	memset(vcn_bo->ptr, 0, size);
 	r = amdgpu_bo_cpu_unmap(vcn_bo->handle);
@@ -567,7 +567,7 @@ static void amdgpu_cs_vcn_dec_create(void)
 	resources[num_resources++] = session_ctx_buf.handle;
 	resources[num_resources++] = ib_handle;
 
-	r = amdgpu_bo_cpu_map(msg_buf.handle, (void **)&msg_buf.ptr);
+	r = amdgpu_bo_cpu_map(msg_buf.handle, NULL, 0, (void **)&msg_buf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memset(msg_buf.ptr, 0, 4096);
@@ -625,7 +625,7 @@ static void amdgpu_cs_vcn_dec_decode(void)
 	resources[num_resources++] = dec_buf.handle;
 	resources[num_resources++] = ib_handle;
 
-	r = amdgpu_bo_cpu_map(dec_buf.handle, (void **)&dec_buf.ptr);
+	r = amdgpu_bo_cpu_map(dec_buf.handle, NULL, 0, (void **)&dec_buf.ptr);
 	dec = dec_buf.ptr;
 
 	CU_ASSERT_EQUAL(r, 0);
@@ -701,7 +701,7 @@ static void amdgpu_cs_vcn_dec_destroy(void)
 	resources[num_resources++] = msg_buf.handle;
 	resources[num_resources++] = ib_handle;
 
-	r = amdgpu_bo_cpu_map(msg_buf.handle, (void **)&msg_buf.ptr);
+	r = amdgpu_bo_cpu_map(msg_buf.handle, NULL, 0, (void **)&msg_buf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memset(msg_buf.ptr, 0, 1024);
@@ -766,11 +766,11 @@ static void amdgpu_cs_vcn_enc_create(void)
 	resources[num_resources++] = cpb_buf.handle;
 	resources[num_resources++] = ib_handle;
 
-	r = amdgpu_bo_cpu_map(enc_buf.handle, (void**)&enc_buf.ptr);
+	r = amdgpu_bo_cpu_map(enc_buf.handle, NULL, 0, (void**)&enc_buf.ptr);
 	memset(enc_buf.ptr, 0, 128 * 1024);
 	r = amdgpu_bo_cpu_unmap(enc_buf.handle);
 
-	r = amdgpu_bo_cpu_map(cpb_buf.handle, (void**)&enc_buf.ptr);
+	r = amdgpu_bo_cpu_map(cpb_buf.handle, NULL, 0, (void**)&enc_buf.ptr);
 	memset(enc_buf.ptr, 0, buf_size * 2);
 	r = amdgpu_bo_cpu_unmap(cpb_buf.handle);
 
@@ -1259,13 +1259,13 @@ static void check_result(struct amdgpu_vcn_bo fb_buf, struct amdgpu_vcn_bo bs_bu
 	int r;
 /* 	uint64_t s[3] = {0, 1121279001727, 1059312481445}; */
 
-	r = amdgpu_bo_cpu_map(fb_buf.handle, (void **)&fb_buf.ptr);
+	r = amdgpu_bo_cpu_map(fb_buf.handle, NULL, 0, (void **)&fb_buf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	fb_ptr = (uint32_t*)fb_buf.ptr;
 	size = fb_ptr[6];
 	r = amdgpu_bo_cpu_unmap(fb_buf.handle);
 	CU_ASSERT_EQUAL(r, 0);
-	r = amdgpu_bo_cpu_map(bs_buf.handle, (void **)&bs_buf.ptr);
+	r = amdgpu_bo_cpu_map(bs_buf.handle, NULL, 0, (void **)&bs_buf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	bs_ptr = (uint8_t*)bs_buf.ptr;
@@ -1314,15 +1314,15 @@ static void amdgpu_cs_vcn_enc_encode_frame(int frame_type)
 	resources[num_resources++] = ib_handle;
 
 
-	r = amdgpu_bo_cpu_map(bs_buf.handle, (void**)&bs_buf.ptr);
+	r = amdgpu_bo_cpu_map(bs_buf.handle, NULL, 0, (void**)&bs_buf.ptr);
 	memset(bs_buf.ptr, 0, 4096);
 	r = amdgpu_bo_cpu_unmap(bs_buf.handle);
 
-	r = amdgpu_bo_cpu_map(fb_buf.handle, (void**)&fb_buf.ptr);
+	r = amdgpu_bo_cpu_map(fb_buf.handle, NULL, 0, (void**)&fb_buf.ptr);
 	memset(fb_buf.ptr, 0, 4096);
 	r = amdgpu_bo_cpu_unmap(fb_buf.handle);
 
-	r = amdgpu_bo_cpu_map(input_buf.handle, (void **)&input_buf.ptr);
+	r = amdgpu_bo_cpu_map(input_buf.handle, NULL, 0, (void **)&input_buf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	for (int i = 0; i < ALIGN(height, 32) * 3 / 2; i++)

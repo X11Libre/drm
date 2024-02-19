@@ -226,7 +226,7 @@ static void amdgpu_cs_uvd_create(void)
 	r = amdgpu_bo_va_op(buf_handle, 0, 4096, va, 0, AMDGPU_VA_OP_MAP);
 	CU_ASSERT_EQUAL(r, 0);
 
-	r = amdgpu_bo_cpu_map(buf_handle, &msg);
+	r = amdgpu_bo_cpu_map(buf_handle, NULL, 0, &msg);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memcpy(msg, uvd_create_msg, sizeof(uvd_create_msg));
@@ -305,7 +305,7 @@ static void amdgpu_cs_uvd_decode(void)
 			    AMDGPU_VA_OP_MAP);
 	CU_ASSERT_EQUAL(r, 0);
 
-	r = amdgpu_bo_cpu_map(buf_handle, (void **)&ptr);
+	r = amdgpu_bo_cpu_map(buf_handle, NULL, 0, (void **)&ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memcpy(ptr, uvd_decode_msg, sizeof(uvd_decode_msg));
@@ -438,7 +438,7 @@ static void amdgpu_cs_uvd_destroy(void)
 			    AMDGPU_VA_OP_MAP);
 	CU_ASSERT_EQUAL(r, 0);
 
-	r = amdgpu_bo_cpu_map(buf_handle, &msg);
+	r = amdgpu_bo_cpu_map(buf_handle, NULL, 0, &msg);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memcpy(msg, uvd_destroy_msg, sizeof(uvd_destroy_msg));

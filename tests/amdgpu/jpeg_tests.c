@@ -296,7 +296,7 @@ static void alloc_resource(struct amdgpu_jpeg_bo *jpeg_bo, unsigned size,
 	jpeg_bo->handle = buf_handle;
 	jpeg_bo->size = req.alloc_size;
 	jpeg_bo->va_handle = va_handle;
-	r = amdgpu_bo_cpu_map(jpeg_bo->handle, (void **)&jpeg_bo->ptr);
+	r = amdgpu_bo_cpu_map(jpeg_bo->handle, NULL, 0, (void **)&jpeg_bo->ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	memset(jpeg_bo->ptr, 0, size);
 	r = amdgpu_bo_cpu_unmap(jpeg_bo->handle);
@@ -541,7 +541,7 @@ static void amdgpu_cs_jpeg_decode(void)
 	alloc_resource(&dec_buf, size, AMDGPU_GEM_DOMAIN_VRAM);
 	resources[num_resources++] = dec_buf.handle;
 	resources[num_resources++] = ib_handle;
-	r = amdgpu_bo_cpu_map(dec_buf.handle, (void **)&dec_buf.ptr);
+	r = amdgpu_bo_cpu_map(dec_buf.handle, NULL, 0, (void **)&dec_buf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	memcpy(dec_buf.ptr, jpeg_bitstream, sizeof(jpeg_bitstream));
 
@@ -559,7 +559,7 @@ static void amdgpu_cs_jpeg_decode(void)
 	r = submit(len, AMDGPU_HW_IP_VCN_JPEG);
 	CU_ASSERT_EQUAL(r, 0);
 
-	r = amdgpu_bo_cpu_map(dec_buf.handle, (void **)&dec_buf.ptr);
+	r = amdgpu_bo_cpu_map(dec_buf.handle, NULL, 0, (void **)&dec_buf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	dec = dec_buf.ptr + (size / 2);

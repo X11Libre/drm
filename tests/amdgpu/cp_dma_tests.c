@@ -289,7 +289,7 @@ static void amdgpu_cp_dma(uint32_t src_heap, uint32_t dst_heap) {
 			src_heap, AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED, &src_bo);
 	CU_ASSERT_EQUAL(r, 0);
 
-	r = amdgpu_bo_cpu_map(src_bo.buf_handle, (void **)&src_bo_cpu);
+	r = amdgpu_bo_cpu_map(src_bo.buf_handle, NULL, 0, (void **)&src_bo_cpu);
 	CU_ASSERT_EQUAL(r, 0);
 	memset(src_bo_cpu, DMA_DATA_BYTE, DMA_SIZE);
 
@@ -301,7 +301,7 @@ static void amdgpu_cp_dma(uint32_t src_heap, uint32_t dst_heap) {
 			dst_heap, AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED, &dst_bo);
 	CU_ASSERT_EQUAL(r, 0);
 
-	r = amdgpu_bo_cpu_map(dst_bo.buf_handle, (void **)&dst_bo_cpu);
+	r = amdgpu_bo_cpu_map(dst_bo.buf_handle, NULL, 0, (void **)&dst_bo_cpu);
 	CU_ASSERT_EQUAL(r, 0);
 
 	_Static_assert(DMA_DATA_BYTE != 0, "Initialization data should be different from DMA data!");
@@ -343,7 +343,7 @@ static void amdgpu_cp_dma_p2p(uint32_t src_heap, uint32_t dst_heap) {
 
 	/* map the exported bo and clear its content to 0 */
 	_Static_assert(DMA_DATA_BYTE != 0, "Initialization data should be different from DMA data!");
-	r = amdgpu_bo_cpu_map(exported_bo.buf_handle, (void **)&exported_bo_cpu);
+	r = amdgpu_bo_cpu_map(exported_bo.buf_handle, NULL, 0, (void **)&exported_bo_cpu);
 	CU_ASSERT_EQUAL(r, 0);
 	memset(exported_bo_cpu, 0, DMA_SIZE);
 
@@ -371,7 +371,7 @@ static void amdgpu_cp_dma_p2p(uint32_t src_heap, uint32_t dst_heap) {
 			dst_heap, AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED, &src_bo);
 	CU_ASSERT_EQUAL(r, 0);
 
-	r = amdgpu_bo_cpu_map(src_bo.buf_handle, (void **)&src_bo_cpu);
+	r = amdgpu_bo_cpu_map(src_bo.buf_handle, NULL, 0, (void **)&src_bo_cpu);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memset(src_bo_cpu, DMA_DATA_BYTE, DMA_SIZE);
