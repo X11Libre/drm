@@ -62,11 +62,15 @@ struct color_yuv {
 	  .u = MAKE_YUV_601_U(r, g, b), \
 	  .v = MAKE_YUV_601_V(r, g, b) }
 
+/* OpenBSD has these as macros */
+#ifndef swap16
 static inline uint16_t swap16(uint16_t x)
 {
 	return ((x & 0x00ffU) << 8) | ((x & 0xff00U) >> 8);
 }
+#endif
 
+#ifndef swap32
 static inline uint32_t swap32(uint32_t x)
 {
 	return ((x & 0x000000ffU) << 24) |
@@ -74,6 +78,7 @@ static inline uint32_t swap32(uint32_t x)
 	       ((x & 0x00ff0000U) >>  8) |
 	       ((x & 0xff000000U) >> 24);
 }
+#endif
 
 #ifdef HAVE_BIG_ENDIAN
 #define cpu_to_be16(x)			(x)
