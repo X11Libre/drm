@@ -67,7 +67,9 @@
 #include <sys/pciio.h>
 #endif
 
+#ifndef ARRAY_SIZE /* Solaris already defines this */
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#endif
 
 /* Not all systems have MAP_FAILED defined */
 #ifndef MAP_FAILED
