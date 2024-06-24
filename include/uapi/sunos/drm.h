@@ -526,8 +526,13 @@ struct drm_wait_vblank_request {
 struct drm_wait_vblank_reply {
 	enum drm_vblank_seq_type type;
 	unsigned int sequence;
+#if defined(__sun)
+	time_t tval_sec;
+	suseconds_t tval_usec;
+#else
 	long tval_sec;
 	long tval_usec;
+#endif /* __sun */
 };
 
 /*
@@ -1374,8 +1379,13 @@ struct drm_event {
 struct drm_event_vblank {
 	struct drm_event base;
 	__u64 user_data;
+#if defined(__sun)
+	time_t tv_sec;
+	suseconds_t tv_usec;
+#else
 	__u32 tv_sec;
 	__u32 tv_usec;
+#endif /* __sun */
 	__u32 sequence;
 	__u32 crtc_id; /* 0 on older kernels that do not support this */
 };
