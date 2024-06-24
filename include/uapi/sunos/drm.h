@@ -1061,10 +1061,10 @@ extern "C" {
 #endif
 
 #define DRM_IOCTL_BASE			'd'
-#define DRM_IO(nr)			_IO(DRM_IOCTL_BASE,nr)
-#define DRM_IOR(nr,type)		_IOR(DRM_IOCTL_BASE,nr,type)
-#define DRM_IOW(nr,type)		_IOW(DRM_IOCTL_BASE,nr,type)
-#define DRM_IOWR(nr,type)		_IOWR(DRM_IOCTL_BASE,nr,type)
+#define DRM_IO(nr)			_IO(DRM_IOCTL_BASE,(nr))
+#define DRM_IOR(nr,type)		_IOR(DRM_IOCTL_BASE,(nr),type)
+#define DRM_IOW(nr,type)		_IOW(DRM_IOCTL_BASE,(nr),type)
+#define DRM_IOWR(nr,type)		_IOWR(DRM_IOCTL_BASE,(nr),type)
 
 #define DRM_IOCTL_VERSION		DRM_IOWR(0x00, struct drm_version)
 #define DRM_IOCTL_GET_UNIQUE		DRM_IOWR(0x01, struct drm_unique)
