@@ -41,6 +41,38 @@
 #include <asm/ioctl.h>
 typedef unsigned int drm_handle_t;
 
+#elif defined(__sun)
+
+#include <sys/ioccom.h>
+#include <sys/types.h>
+#include <sys/types32.h>
+typedef int8_t   __s8;
+typedef uint8_t  __u8;
+typedef int16_t  __s16;
+typedef uint16_t __u16;
+typedef int32_t  __s32;
+typedef uint32_t __u32;
+typedef int64_t  __s64;
+typedef uint64_t __u64;
+typedef size_t   __kernel_size_t;
+typedef unsigned long long drm_handle_t;
+
+#define _IOC_NRBITS     8
+#define _IOC_TYPEBITS   8
+#define _IOC_SIZEBITS   13
+#define _IOC_DIRBITS    3
+
+#define _IOC_NRSHIFT    0
+#define _IOC_TYPESHIFT  (_IOC_NRSHIFT + _IOC_NRBITS)
+#define _IOC_SIZESHIFT  (_IOC_TYPESHIFT + _IOC_TYPEBITS)
+#define _IOC_DIRSHIFT   (_IOC_SIZESHIFT + _IOC_SIZEBITS)
+
+#define _IOC(dir, type, nr, size) \
+       (((dir) /* already shifted */) | \
+       ((type) << _IOC_TYPESHIFT) | \
+       ((nr)   << _IOC_NRSHIFT) | \
+       ((size) << _IOC_SIZESHIFT))
+
 #else /* One of the BSDs */
 
 #include <stdint.h>
