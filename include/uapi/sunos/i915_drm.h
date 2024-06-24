@@ -333,6 +333,9 @@ typedef struct _drm_i915_sarea {
 	int perf_boxes;		/* performance boxes to be displayed */
 	int width, height;      /* screen size in pixels */
 
+#if defined(__sun)
+	int pad0;
+#endif
 	drm_handle_t front_handle;
 	int front_offset;
 	int front_size;
@@ -371,6 +374,9 @@ typedef struct _drm_i915_sarea {
 	int pipeB_w;
 	int pipeB_h;
 
+#if defined(__sun)
+	int pad1;
+#endif
 	/* fill out some space for old userspace triple buffer */
 	drm_handle_t unused_handle;
 	__u32 unused1, unused2, unused3;
@@ -476,11 +482,20 @@ typedef struct _drm_i915_sarea {
 #define DRM_IOCTL_I915_FLUSH		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLUSH)
 #define DRM_IOCTL_I915_FLIP		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLIP)
 #define DRM_IOCTL_I915_BATCHBUFFER	DRM_IOW( DRM_COMMAND_BASE + DRM_I915_BATCHBUFFER, drm_i915_batchbuffer_t)
+#if defined(__sun)
+/* I915_IRQ_EMIT is IOW not IOWR because it does its own copyout. */
+#define DRM_IOCTL_I915_IRQ_EMIT         DRM_IOW( DRM_COMMAND_BASE + DRM_I915_IRQ_EMIT, drm_i915_irq_emit_t)
+/* I915_GETPARAM is IOW not IOWR because it does its own copyout. */
+#define DRM_IOCTL_I915_GETPARAM         DRM_IOW( DRM_COMMAND_BASE + DRM_I915_GETPARAM, drm_i915_getparam_t)
+/* I915_ALLOC is IOW not IOWR because it's a noop */
+#define DRM_IOCTL_I915_ALLOC            DRM_IOW( DRM_COMMAND_BASE + DRM_I915_ALLOC, drm_i915_mem_alloc_t)
+#else
 #define DRM_IOCTL_I915_IRQ_EMIT         DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_IRQ_EMIT, drm_i915_irq_emit_t)
-#define DRM_IOCTL_I915_IRQ_WAIT         DRM_IOW( DRM_COMMAND_BASE + DRM_I915_IRQ_WAIT, drm_i915_irq_wait_t)
 #define DRM_IOCTL_I915_GETPARAM         DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GETPARAM, drm_i915_getparam_t)
-#define DRM_IOCTL_I915_SETPARAM         DRM_IOW( DRM_COMMAND_BASE + DRM_I915_SETPARAM, drm_i915_setparam_t)
 #define DRM_IOCTL_I915_ALLOC            DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_ALLOC, drm_i915_mem_alloc_t)
+#endif /* __sun */
+#define DRM_IOCTL_I915_IRQ_WAIT         DRM_IOW( DRM_COMMAND_BASE + DRM_I915_IRQ_WAIT, drm_i915_irq_wait_t)
+#define DRM_IOCTL_I915_SETPARAM         DRM_IOW( DRM_COMMAND_BASE + DRM_I915_SETPARAM, drm_i915_setparam_t)
 #define DRM_IOCTL_I915_FREE             DRM_IOW( DRM_COMMAND_BASE + DRM_I915_FREE, drm_i915_mem_free_t)
 #define DRM_IOCTL_I915_INIT_HEAP        DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT_HEAP, drm_i915_mem_init_heap_t)
 #define DRM_IOCTL_I915_CMDBUFFER	DRM_IOW( DRM_COMMAND_BASE + DRM_I915_CMDBUFFER, drm_i915_cmdbuffer_t)
