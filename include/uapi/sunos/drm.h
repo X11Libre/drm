@@ -246,12 +246,21 @@ struct drm_ctx_priv_map {
  * \sa drmAddMap().
  */
 struct drm_map {
+#if defined(__sun)
+	unsigned long long offset;	 /**< Requested physical address (0 for SAREA)*/
+	unsigned long long handle;
+				 /**< User-space: "Handle" to pass to mmap() */
+				 /**< Kernel-space: kernel-virtual address */
+#else
 	unsigned long offset;	 /**< Requested physical address (0 for SAREA)*/
+#endif /* __sun */
 	unsigned long size;	 /**< Requested physical size (bytes) */
 	enum drm_map_type type;	 /**< Type of memory to map */
 	enum drm_map_flags flags;	 /**< Flags */
+#if !defined(__sun)
 	void *handle;		 /**< User-space: "Handle" to pass to mmap() */
 				 /**< Kernel-space: kernel-virtual address */
+#endif /* __sun */
 	int mtrr;		 /**< MTRR slot used */
 	/*   Private data */
 };
@@ -415,6 +424,9 @@ struct drm_buf_map {
 	void *virtual;		/**< Mmap'd area in user-virtual */
 #endif
 	struct drm_buf_pub *list;	/**< Buffer information */
+#if defined(__sun)
+	int fd;
+#endif /* __sun */
 };
 
 /*
