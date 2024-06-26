@@ -31,6 +31,13 @@ if ['windows', 'darwin'].contains(host_machine.system())
   error('unsupported OS: @0@'.format(host_machine.system()))
 endif
 
+# not all UTS following exactly the same DRI UAPI as Linux has
+# e.g. SunOS/Illumos has some subtle differences
+uapi = 'linux'
+if ['sunos'].contains(host_machine.system())
+  uapi = host_machine.system()
+endif
+
 pkg = import('pkgconfig')
 
 config = configuration_data()
@@ -243,7 +250,7 @@ config_file = configure_file(
 add_project_arguments('-include', meson.current_build_dir() / 'config.h', language : 'c')
 
 inc_root = include_directories('.')
-inc_drm = include_directories('include/drm')
+inc_drm = include_directories('include/drm', 'include/uapi/'+uapi)
 
 libdrm_files = [files(
    'xf86drm.c', 'xf86drmHash.c', 'xf86drmRandom.c', 'xf86drmSL.c',
@@ -291,8 +298,10 @@ endif
 
 install_headers('libsync.h', 'xf86drm.h', 'xf86drmMode.h')
 install_headers(
-  'include/drm/drm.h', 'include/drm/drm_fourcc.h', 'include/drm/drm_mode.h',
-  'include/drm/drm_sarea.h', 'include/drm/i915_drm.h',
+  'include/uapi/'+uapi+'/drm.h',
+  'include/uapi/'+uapi+'/i915_drm.h',
+  'include/drm/drm_fourcc.h', 'include/drm/drm_mode.h',
+  'include/drm/drm_sarea.h',
   'include/drm/mach64_drm.h', 'include/drm/mga_drm.h',
   'include/drm/msm_drm.h', 'include/drm/nouveau_drm.h',
   'include/drm/qxl_drm.h', 'include/drm/r128_drm.h',
