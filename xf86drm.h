@@ -59,6 +59,9 @@ extern "C" {
 #else /* One of the *BSDs */
 
 #include <sys/ioccom.h>
+#ifdef __sun
+#define _IOC(d, x, y, t)	((int)((uint32_t)(d | (((sizeof (t)) & IOCPARM_MASK)<<16) | (x<<8) | y)))
+#endif
 #define DRM_IOCTL_NR(n)         ((n) & 0xff)
 #define DRM_IOC_VOID            IOC_VOID
 #define DRM_IOC_READ            IOC_OUT
