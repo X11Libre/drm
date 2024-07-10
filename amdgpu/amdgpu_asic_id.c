@@ -138,33 +138,31 @@ void amdgpu_parse_asic_ids(struct amdgpu_device *dev)
 
        // if it doesn't exist, search
        if (!fp) {
+              char self_path[ PATH_MAX ];
+              ssize_t count;
+              ssize_t i;
 
-       char self_path[ PATH_MAX ];
-       ssize_t count;
-       ssize_t i;
+              count = readlink( "/proc/self/exe", self_path, PATH_MAX );
+              if (count > 0) {
+                     self_path[count] = '\0';
 
-       count = readlink( "/proc/self/exe", self_path, PATH_MAX );
-       if (count > 0) {
-              self_path[count] = '\0';
-
-              // remove '/bin/python' from self_path
-              for (i=count; i>0; --i) {
-                     if (self_path[i] == '/') break;
+                     // remove '/bin/python' from self_path
+                     for (i=count; i>0; --i) {
+                            if (self_path[i] == '/') break;
+                            self_path[i] = '\0';
+                     }
                      self_path[i] = '\0';
-              }
-              self_path[i] = '\0';
-              for (; i>0; --i) {
-                     if (self_path[i] == '/') break;
+                     for (; i>0; --i) {
+                            if (self_path[i] == '/') break;
+                            self_path[i] = '\0';
+                     }
                      self_path[i] = '\0';
-              }
-              self_path[i] = '\0';
 
-              if (1 == nftw(self_path, check_for_location_of_amdgpuids, 5, FTW_PHYS)) {
-                     fp = fopen(amdgpuids_path, "r");
-                     amdgpuids_path_msg = amdgpuids_path;
+                     if (1 == nftw(self_path, check_for_location_of_amdgpuids, 5, FTW_PHYS)) {
+                            fp = fopen(amdgpuids_path, "r");
+                            amdgpuids_path_msg = amdgpuids_path;
+                     }
               }
-       }
-
        }
        else {
               amdgpuids_path_msg = AMDGPU_ASIC_ID_TABLE;
