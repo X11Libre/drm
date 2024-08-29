@@ -213,8 +213,7 @@ fd_bo_from_fbdev(struct fd_pipe *pipe, int fbfd, uint32_t size)
 
 	return bo;
 fail:
-	if (bo)
-		fd_bo_del(bo);
+	fd_bo_del(bo);
 	return NULL;
 }
 
