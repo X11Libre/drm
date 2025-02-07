@@ -3498,6 +3498,8 @@ static char *drmGetMinorNameForFD(int fd, int type)
     const char *dev_name = drmGetDeviceName(type);
     unsigned int maj, min;
     int n;
+    int base = drmGetMinorBase(type);
+    int renderbase = drmGetMinorBase(DRM_NODE_RENDER);
 
     if (fstat(fd, &sbuf))
         return NULL;
@@ -3511,7 +3513,10 @@ static char *drmGetMinorNameForFD(int fd, int type)
     if (!dev_name)
         return NULL;
 
-    n = snprintf(buf, sizeof(buf), dev_name, DRM_DIR_NAME, min);
+    if (min >= renderbase)
+        min -= renderbase;
+
+    n = snprintf(buf, sizeof(buf), dev_name, DRM_DIR_NAME, base + min);
     if (n == -1 || n >= sizeof(buf))
         return NULL;
 
