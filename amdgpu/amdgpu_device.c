@@ -325,3 +325,19 @@ drm_public int amdgpu_query_sw_info(amdgpu_device_handle dev,
 	}
 	return -EINVAL;
 }
+
+drm_public int amdgpu_device_dup_fd(amdgpu_device_handle dev)
+{
+	struct amdgpu_device *dev_tmp;
+
+	pthread_mutex_lock(&dev_mutex);
+	for (dev_tmp = dev_list; dev_tmp; dev_tmp = dev_tmp->next){
+		if (dev_tmp == dev){
+			pthread_mutex_unlock(&dev_mutex);
+			return fcntl(dev_tmp->fd, F_DUPFD_CLOEXEC, 0);
+		}
+	}
+	pthread_mutex_unlock(&dev_mutex);
+
+	return -EINVAL;
+}
