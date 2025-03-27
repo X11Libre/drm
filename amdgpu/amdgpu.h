@@ -313,6 +313,36 @@ struct amdgpu_cs_ib_info {
 };
 
 /**
+ * Structure describing gang IB, used for submitting ib's on multiple HW IP.
+ *
+ * \sa amdgpu_cs_request, amdgpu_cs_submit_gang()
+ *
+*/
+struct amdgpu_cs_ib_info_gang {
+	/** Special flags */
+	uint64_t flags;
+
+	/** Virtual MC address of the command buffer */
+	uint64_t ib_mc_address;
+
+	/**
+	 * Size of Command Buffer to be submitted.
+	 *   - The size is in units of dwords (4 bytes).
+	 *   - Could be 0
+	 */
+	uint32_t size;
+
+	/** To which HW IP type the ip belongs */
+	uint32_t ip_type;
+
+	/** IP instance index if there are several IPs of the same type. */
+	uint32_t ip_instance;
+
+	/** Ring index of the HW IP */
+	uint32_t ring;
+};
+
+/**
  * Structure describing fence information
  *
  * \sa amdgpu_cs_request, amdgpu_cs_query_fence,
@@ -383,6 +413,12 @@ struct amdgpu_cs_request {
 	 * The fence information
 	 */
 	struct amdgpu_cs_fence_info fence_info;
+
+	/**
+	 * Use below *ibs_gang instead of *ibs for gang submission. Gang submission
+	 * allows ib from different HW IP to be submitted as single entity.
+	 */
+	struct amdgpu_cs_ib_info_gang *ibs_gang;
 };
 
 /**
@@ -1047,6 +1083,45 @@ int amdgpu_cs_query_reset_state2(amdgpu_context_handle context,
  *
 */
 int amdgpu_cs_submit(amdgpu_context_handle context,
+		     uint64_t flags,
+		     struct amdgpu_cs_request *ibs_request,
+		     uint32_t number_of_requests);
+
+/**
+ * Send request to submit command buffers to hardware.
+ *
+ * Kernel driver could use GPU Scheduler to make decision when physically
+ * sent this request to the hardware. Accordingly this request could be put
+ * in queue and sent for execution later. The only guarantee is that request
+ * from the same GPU context will be executed in order.
+ *
+ * The caller can specify the user fence buffer/location with the fence_info in the
+ * cs_request.The sequence number is returned via the 'seq_no' parameter
+ * in ibs_request structure.
+ *
+ *
+ * \param   dev		       - \c [in]  Device handle.
+ *					  See #amdgpu_device_initialize()
+ * \param   context            - \c [in]  GPU Context
+ * \param   flags              - \c [in]  Global submission flags
+ * \param   ibs_request        - \c [in/out] Pointer to submission requests.
+ *					  We could submit to the several
+ *					  engines/rings simulteniously as
+ *					  'atomic' operation
+ * \param   number_of_requests - \c [in]  Number of submission requests
+ *
+ * \return   0 on success\n
+ *          <0 - Negative POSIX Error code
+ *
+ * \note It is required to pass correct resource list with buffer handles
+ *	 which will be accessible by command buffers from submission
+ *	 This will allow kernel driver to correctly implement "paging".
+ *	 Failure to do so will have unpredictable results.
+ *
+ * \sa amdgpu_cs_query_fence_status()
+ *
+*/
+int amdgpu_cs_submit_gang(amdgpu_context_handle context,
 		     uint64_t flags,
 		     struct amdgpu_cs_request *ibs_request,
 		     uint32_t number_of_requests);

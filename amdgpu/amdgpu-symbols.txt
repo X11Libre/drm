@@ -82,3 +82,4 @@ amdgpu_va_get_start_addr
 amdgpu_va_range_query
 amdgpu_vm_reserve_vmid
 amdgpu_vm_unreserve_vmid
+amdgpu_cs_submit_gang
