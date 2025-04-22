@@ -86,6 +86,8 @@ enum radeon_family {
     CHIP_HAINAN,
     CHIP_BONAIRE,
     CHIP_KAVERI,
+    CHIP_LIVERPOOL,
+    CHIP_GLADIUS,
     CHIP_KABINI,
     CHIP_HAWAII,
     CHIP_MULLINS,
