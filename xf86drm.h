@@ -68,6 +68,13 @@ extern "C" {
 
 #endif
 
+#if defined(__HAIKU__) && !defined(makedev)
+/* Haiku has the POSIX dev_t type, no makedev macro though */
+#define makedev(major,minor) (((major) << 8) | ((minor) & 0xff))
+#define major(dev) ((int)(((dev) >> 8) & 0xff))
+#define minor(dev) ((int)((dev) & 0xff))
+#endif
+
 				/* Defaults, if nothing set in xf86config */
 #define DRM_DEV_UID	 0
 #define DRM_DEV_GID	 0

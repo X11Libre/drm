@@ -28,7 +28,6 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <err.h>
 
 #include "libdrm_macros.h"
 #include "intel_bufmgr.h"
@@ -52,17 +51,23 @@ read_file(const char *filename, void **ptr, size_t *size)
 	struct stat st;
 
 	fd = open(filename, O_RDONLY);
-	if (fd < 0)
-		errx(1, "couldn't open `%s'", filename);
+	if (fd < 0) {
+		fprintf(stderr, "couldn't open `%s'\n", filename);
+		exit(1);
+	}
 
 	ret = fstat(fd, &st);
-	if (ret)
-		errx(1, "couldn't stat `%s'", filename);
+	if (ret) {
+		fprintf(stderr, "couldn't stat `%s'\n", filename);
+		exit(1);
+	}
 
 	*size = st.st_size;
 	*ptr = drm_mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
-	if (*ptr == MAP_FAILED)
-		errx(1, "couldn't map `%s'", filename);
+	if (*ptr == MAP_FAILED) {
+		fprintf(stderr, "couldn't map `%s'\n", filename);
+		exit(1);
+	}
 
 	close(fd);
 }

@@ -39,6 +39,11 @@ def get_symbols(nm, lib):
         if platform_name == 'Linux':
             if symbol_name in PLATFORM_SYMBOLS:
                 continue
+        elif platform_name == 'Haiku':
+            if symbol_name in PLATFORM_SYMBOLS:
+                continue
+            if symbol_name in ['_gSharedObjectHaikuABI', '_gSharedObjectHaikuVersion']:
+                continue
         elif platform_name == 'Darwin':
             assert symbol_name[0] == '_'
             symbol_name = symbol_name[1:]
