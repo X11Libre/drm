@@ -420,6 +420,11 @@ handle_stateobj_relocs(struct fd_ringbuffer *parent, struct fd_ringbuffer *state
 {
 	struct msm_ringbuffer *msm_ring = to_msm_ringbuffer(stateobj);
 	struct drm_msm_gem_submit_reloc *relocs = malloc(nr_relocs * sizeof(*relocs));
+	if (!relocs) {
+		ERROR_MSG("malloc relocs failed");
+		return NULL;
+	}
+
 	unsigned i;
 
 	for (i = 0; i < nr_relocs; i++) {
