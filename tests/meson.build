@@ -40,8 +40,12 @@ endif
 if with_etnaviv
   subdir('etnaviv')
 endif
+lib_type = get_option('default_library')
 if with_nouveau
-  subdir('nouveau')
+  # the nouveau test uses dlsym() making it incompatible with static linking
+  if lib_type != 'static'
+    subdir('nouveau')
+  endif
 endif
 
 drmsl = executable(
