@@ -686,7 +686,7 @@ g2d_copy_with_scale(struct g2d_context *ctx, struct g2d_image *src,
 	union g2d_rop4_val rop4;
 	union g2d_point_val pt;
 	unsigned int scale, repeat_pad;
-	unsigned int scale_x, scale_y;
+	unsigned int scale_x = 0, scale_y = 0;
 
 	/* Sanitize this parameter to facilitate space computation below. */
 	if (negative)
@@ -912,7 +912,7 @@ g2d_scale_and_blend(struct g2d_context *ctx, struct g2d_image *src,
 	union g2d_bitblt_cmd_val bitblt;
 	union g2d_blend_func_val blend;
 	unsigned int scale, gem_space;
-	unsigned int scale_x, scale_y;
+	unsigned int scale_x = 0, scale_y = 0;
 
 	if (src_w == dst_w && src_h == dst_h)
 		scale = 0;
