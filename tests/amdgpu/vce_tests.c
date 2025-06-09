@@ -260,7 +260,7 @@ static void alloc_resource(struct amdgpu_vce_bo *vce_bo, unsigned size, unsigned
 	vce_bo->handle = buf_handle;
 	vce_bo->size = req.alloc_size;
 	vce_bo->va_handle = va_handle;
-	r = amdgpu_bo_cpu_map(vce_bo->handle, (void **)&vce_bo->ptr);
+	r = amdgpu_bo_cpu_map(vce_bo->handle, NULL, 0, (void **)&vce_bo->ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	memset(vce_bo->ptr, 0, size);
 	r = amdgpu_bo_cpu_unmap(vce_bo->handle);
@@ -467,13 +467,13 @@ static void check_result(struct amdgpu_vce_encode *enc)
 	int i, j, r;
 
 	for (i = 0; i < 2; ++i) {
-		r = amdgpu_bo_cpu_map(enc->fb[i].handle, (void **)&enc->fb[i].ptr);
+		r = amdgpu_bo_cpu_map(enc->fb[i].handle, NULL, 0, (void **)&enc->fb[i].ptr);
 		CU_ASSERT_EQUAL(r, 0);
 		ptr = (uint32_t *)enc->fb[i].ptr;
 		size = ptr[4] - ptr[9];
 		r = amdgpu_bo_cpu_unmap(enc->fb[i].handle);
 		CU_ASSERT_EQUAL(r, 0);
-		r = amdgpu_bo_cpu_map(enc->bs[i].handle, (void **)&enc->bs[i].ptr);
+		r = amdgpu_bo_cpu_map(enc->bs[i].handle, NULL, 0, (void **)&enc->bs[i].ptr);
 		CU_ASSERT_EQUAL(r, 0);
 		for (j = 0, sum = 0; j < size; ++j)
 			sum += enc->bs[i].ptr[j];
@@ -506,7 +506,7 @@ static void amdgpu_cs_vce_encode(void)
 	resources[num_resources++] = enc.cpb.handle;
 	resources[num_resources++] = ib_handle;
 
-	r = amdgpu_bo_cpu_map(enc.vbuf.handle, (void **)&enc.vbuf.ptr);
+	r = amdgpu_bo_cpu_map(enc.vbuf.handle, NULL, 0, (void **)&enc.vbuf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memset(enc.vbuf.ptr, 0, vbuf_size);
@@ -651,11 +651,11 @@ static void check_mv_result(struct amdgpu_vce_encode *enc)
 	uint32_t s = 140790;
 	int j, r;
 
-	r = amdgpu_bo_cpu_map(enc->fb[0].handle, (void **)&enc->fb[0].ptr);
+	r = amdgpu_bo_cpu_map(enc->fb[0].handle, NULL, 0, (void **)&enc->fb[0].ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	r = amdgpu_bo_cpu_unmap(enc->fb[0].handle);
 	CU_ASSERT_EQUAL(r, 0);
-	r = amdgpu_bo_cpu_map(enc->mvb.handle, (void **)&enc->mvb.ptr);
+	r = amdgpu_bo_cpu_map(enc->mvb.handle, NULL, 0, (void **)&enc->mvb.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	for (j = 0, sum = 0; j < enc->mvbuf_size; ++j)
 		sum += enc->mvb.ptr[j];
@@ -688,7 +688,7 @@ static void amdgpu_cs_vce_encode_mv(void)
 	resources[num_resources++] = enc.cpb.handle;
 	resources[num_resources++] = ib_handle;
 
-	r = amdgpu_bo_cpu_map(enc.vbuf.handle, (void **)&enc.vbuf.ptr);
+	r = amdgpu_bo_cpu_map(enc.vbuf.handle, NULL, 0, (void **)&enc.vbuf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memset(enc.vbuf.ptr, 0, vbuf_size);
@@ -704,7 +704,7 @@ static void amdgpu_cs_vce_encode_mv(void)
 	r = amdgpu_bo_cpu_unmap(enc.vbuf.handle);
 	CU_ASSERT_EQUAL(r, 0);
 
-	r = amdgpu_bo_cpu_map(enc.mvrefbuf.handle, (void **)&enc.mvrefbuf.ptr);
+	r = amdgpu_bo_cpu_map(enc.mvrefbuf.handle, NULL, 0, (void **)&enc.mvrefbuf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memset(enc.mvrefbuf.ptr, 0, vbuf_size);

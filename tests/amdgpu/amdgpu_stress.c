@@ -353,7 +353,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	r = amdgpu_bo_cpu_map(resources[0], (void **)&pm4);
+	r = amdgpu_bo_cpu_map(resources[0], NULL, 0, (void **)&pm4);
 	if (r) {
 		fprintf(stderr, "Buffer mapping failed with %d\n", r);
 		exit(EXIT_FAILURE);

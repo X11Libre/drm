@@ -732,7 +732,7 @@ int amdgpu_bo_alloc_and_map_raw(amdgpu_device_handle dev, unsigned size,
 	if (r)
 		goto error_va_map;
 
-	r = amdgpu_bo_cpu_map(buf_handle, cpu);
+	r = amdgpu_bo_cpu_map(buf_handle, NULL, 0, cpu);
 	if (r)
 		goto error_cpu_map;
 

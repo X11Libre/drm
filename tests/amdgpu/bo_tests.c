@@ -186,9 +186,29 @@ static void amdgpu_bo_map_unmap(void)
 	uint32_t *ptr;
 	int i, r;
 
-	r = amdgpu_bo_cpu_map(buffer_handle, (void **)&ptr);
+	r = amdgpu_bo_cpu_map(buffer_handle, NULL, 0, (void **)&ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	CU_ASSERT_NOT_EQUAL(ptr, NULL);
+
+	for (i = 0; i < (BUFFER_SIZE / 4); ++i)
+		ptr[i] = 0xdeadbeef;
+
+	r = amdgpu_bo_cpu_unmap(buffer_handle);
+	CU_ASSERT_EQUAL(r, 0);
+}
+
+static void amdgpu_bo_map_unmap_fixed(void)
+{
+	uint32_t *initial_addr, *ptr;
+	int i, r;
+
+	initial_addr = mmap(NULL, buffer_handle->alloc_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, 0);
+	CU_ASSERT_NOT_EQUAL(initial_addr, MAP_FAILED);
+
+	r = amdgpu_bo_cpu_map(buffer_handle, initial_addr, MAP_FIXED, (void **)&ptr);
+	CU_ASSERT_EQUAL(r, 0);
+	CU_ASSERT_NOT_EQUAL(ptr, NULL);
+	CU_ASSERT_EQUAL(ptr, initial_addr);
 
 	for (i = 0; i < (BUFFER_SIZE / 4); ++i)
 		ptr[i] = 0xdeadbeef;

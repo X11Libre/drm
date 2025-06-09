@@ -218,7 +218,7 @@ static void alloc_resource(struct amdgpu_uvd_enc_bo *uvd_enc_bo,
 	uvd_enc_bo->handle = buf_handle;
 	uvd_enc_bo->size = req.alloc_size;
 	uvd_enc_bo->va_handle = va_handle;
-	r = amdgpu_bo_cpu_map(uvd_enc_bo->handle, (void **)&uvd_enc_bo->ptr);
+	r = amdgpu_bo_cpu_map(uvd_enc_bo->handle, NULL, 0, (void **)&uvd_enc_bo->ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	memset(uvd_enc_bo->ptr, 0, size);
 	r = amdgpu_bo_cpu_unmap(uvd_enc_bo->handle);
@@ -259,13 +259,13 @@ static void check_result(struct amdgpu_uvd_enc *enc)
 	uint32_t *ptr, size;
 	int j, r;
 
-	r = amdgpu_bo_cpu_map(enc->fb.handle, (void **)&enc->fb.ptr);
+	r = amdgpu_bo_cpu_map(enc->fb.handle, NULL, 0, (void **)&enc->fb.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	ptr = (uint32_t *)enc->fb.ptr;
 	size = ptr[6];
 	r = amdgpu_bo_cpu_unmap(enc->fb.handle);
 	CU_ASSERT_EQUAL(r, 0);
-	r = amdgpu_bo_cpu_map(enc->bs.handle, (void **)&enc->bs.ptr);
+	r = amdgpu_bo_cpu_map(enc->bs.handle, NULL, 0, (void **)&enc->bs.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 	for (j = 0, sum = 0; j < size; ++j)
 		sum += enc->bs.ptr[j];
@@ -346,7 +346,7 @@ static void amdgpu_cs_uvd_enc_encode(void)
 	resources[num_resources++] = enc.cpb.handle;
 	resources[num_resources++] = ib_handle;
 
-	r = amdgpu_bo_cpu_map(enc.vbuf.handle, (void **)&enc.vbuf.ptr);
+	r = amdgpu_bo_cpu_map(enc.vbuf.handle, NULL, 0, (void **)&enc.vbuf.ptr);
 	CU_ASSERT_EQUAL(r, 0);
 
 	memset(enc.vbuf.ptr, 0, vbuf_size);
