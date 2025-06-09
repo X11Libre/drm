@@ -785,7 +785,7 @@ drm_public int amdgpu_bo_va_op_raw(amdgpu_device_handle dev,
 	va.offset_in_bo = offset;
 	va.map_size = size;
 
-	r = drmCommandWriteRead(dev->fd, DRM_AMDGPU_GEM_VA, &va, sizeof(va));
+	r = drmCommandWrite(dev->fd, DRM_AMDGPU_GEM_VA, &va, sizeof(va));
 
 	return r;
 }
