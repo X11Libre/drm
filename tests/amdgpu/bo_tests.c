@@ -22,6 +22,9 @@
 */
 
 #include <stdio.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <pthread.h>
 
 #include "CUnit/Basic.h"
 
@@ -45,7 +48,15 @@ static void amdgpu_bo_metadata(void);
 static void amdgpu_bo_map_unmap(void);
 static void amdgpu_memory_alloc(void);
 static void amdgpu_mem_fail_alloc(void);
+static void amdgpu_vram_frag(void);
 static void amdgpu_bo_find_by_cpu_mapping(void);
+
+struct amdgpu_vram_frag_test_data {
+	int max_alloc;
+	int alloc_size;
+	int alloc_align;
+	pthread_cond_t done_cond;
+};
 
 CU_TestInfo bo_tests[] = {
 	{ "Export/Import",  amdgpu_bo_export_import },
@@ -53,6 +64,7 @@ CU_TestInfo bo_tests[] = {
 	{ "CPU map/unmap",  amdgpu_bo_map_unmap },
 	{ "Memory alloc Test",  amdgpu_memory_alloc },
 	{ "Memory fail alloc Test",  amdgpu_mem_fail_alloc },
+	{ "VRAM Fragmentation Test",  amdgpu_vram_frag },
 	{ "Find bo by CPU mapping",  amdgpu_bo_find_by_cpu_mapping },
 	CU_TEST_INFO_NULL,
 };
@@ -284,6 +296,74 @@ static void amdgpu_mem_fail_alloc(void)
 		r = amdgpu_bo_free(buf_handle);
 		CU_ASSERT_EQUAL(r, 0);
 	}
+}
+
+void *amdgpu_vram_frag_test(void *data)
+{
+	int r, i;
+	amdgpu_bo_handle *vram_handle;
+	struct amdgpu_bo_alloc_request request = {};
+	struct amdgpu_vram_frag_test_data *test_data;
+	struct timeval  tv1, tv2;
+
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+	test_data = (struct amdgpu_vram_frag_test_data *) data;
+	vram_handle = malloc(sizeof(amdgpu_bo_handle)*test_data->max_alloc);
+	CU_ASSERT_PTR_NOT_NULL(vram_handle);
+
+	request.alloc_size = test_data->alloc_size;
+	request.phys_alignment = test_data->alloc_align;
+	request.preferred_heap = AMDGPU_GEM_DOMAIN_VRAM;
+
+	gettimeofday(&tv1, NULL);
+	for (i = 0; i < test_data->max_alloc; i++) {
+		r = amdgpu_bo_alloc(device_handle, &request, &vram_handle[i]);
+		CU_ASSERT_EQUAL(r, 0);
+	}
+	gettimeofday(&tv2, NULL);
+
+	printf ("\n\tamdgpu_vram_frag: Total time taken %f secs\n\t",
+			(double) (tv2.tv_usec - tv1.tv_usec) / 1000000 +
+			(double) (tv2.tv_sec - tv1.tv_sec));
+
+	for (i = 0; i < test_data->max_alloc; i++) {
+		r = amdgpu_bo_free(vram_handle[i]);
+		CU_ASSERT_EQUAL(r, 0);
+	}
+
+	pthread_cond_signal(&test_data->done_cond);
+	return NULL;
+}
+
+static void amdgpu_vram_frag(void)
+{
+	int r;
+	pthread_t tid;
+	pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+	struct timespec timeout_time;
+	struct amdgpu_vram_frag_test_data test_data;
+
+	test_data.max_alloc = 100000;
+	test_data.alloc_size = 4096;
+	test_data.alloc_align = 8192;
+	pthread_cond_init(&test_data.done_cond, NULL);
+
+	clock_gettime(CLOCK_REALTIME, &timeout_time);
+	timeout_time.tv_sec += 5;
+
+	pthread_mutex_lock(&lock);
+	pthread_create(&tid, NULL, amdgpu_vram_frag_test, &test_data);
+
+	r = pthread_cond_timedwait(&test_data.done_cond, &lock, &timeout_time);
+
+	if (r == ETIMEDOUT)
+		printf(" timed out\n\t");
+
+	if (!r)
+		pthread_mutex_unlock(&lock);
+
+	CU_ASSERT_EQUAL(r, 0);
 }
 
 static void amdgpu_bo_find_by_cpu_mapping(void)
