@@ -976,10 +976,9 @@ drm_public int drmCheckModesettingSupported(const char *busid)
 	}
 #elif defined(__DragonFly__)
 	return 0;
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) || defined(__NetBSD__)
 	int	fd;
 	struct drm_mode_card_res res;
-	drmModeResPtr r = 0;
 
 	if ((fd = drmOpen(NULL, busid)) < 0)
 		return -EINVAL;
