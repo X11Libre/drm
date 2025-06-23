@@ -932,6 +932,7 @@ extern int drmGetNodeTypeFromDevId(dev_t devid);
  * Returns 1 if the devices are equal, 0 otherwise.
  */
 extern int drmDevicesEqual(drmDevicePtr a, drmDevicePtr b);
+extern int drmDevicesQueryAffinity(drmDevice *a, drmDevice *b);
 
 extern int drmSyncobjCreate(int fd, uint32_t flags, uint32_t *handle);
 extern int drmSyncobjDestroy(int fd, uint32_t handle);

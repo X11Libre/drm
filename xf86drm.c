@@ -3802,6 +3802,95 @@ drm_public int drmDevicesEqual(drmDevicePtr a, drmDevicePtr b)
     return 0;
 }
 
+static bool drmIsDisplayOnly(const char *driver)
+{
+    return strcmp(driver, "armada-drm") == 0
+        || strcmp(driver, "exynos") == 0
+        || strcmp(driver, "hdlcd") == 0
+        || strcmp(driver, "hx8357d") == 0
+        || strcmp(driver, "ili9225") == 0
+        || strcmp(driver, "ili9341") == 0
+        || strcmp(driver, "imx-drm") == 0
+        || strcmp(driver, "imx-dcss") == 0
+        || strcmp(driver, "imx-lcdif") == 0
+        || strcmp(driver, "ingenic-dr") == 0
+        || strcmp(driver, "kirin") == 0
+        || strcmp(driver, "komeda") == 0
+        || strcmp(driver, "mali-dp") == 0
+        || strcmp(driver, "mcde") == 0
+        || strcmp(driver, "mediatek") == 0
+        || strcmp(driver, "meson") == 0
+        || strcmp(driver, "mi0283qt") == 0
+        || strcmp(driver, "mxsfb-drm") == 0
+        || strcmp(driver, "pl111") == 0
+        || strcmp(driver, "rcar-du") == 0
+        || strcmp(driver, "repaper") == 0
+        || strcmp(driver, "rockchip") == 0
+        || strcmp(driver, "st7586") == 0
+        || strcmp(driver, "st7735r") == 0
+        || strcmp(driver, "stm") == 0
+        || strcmp(driver, "sun4i-drm") == 0;
+}
+
+static bool drmIsRenderOnly(const char *driver)
+{
+    return strcmp(driver, "etnaviv") == 0
+        || strcmp(driver, "lima") == 0
+        || strcmp(driver, "v3d") == 0
+        || strcmp(driver, "vc4") == 0
+        || strcmp(driver, "freedreno") == 0
+        || strcmp(driver, "panfrost") == 0
+        || strcmp(driver, "asahi") == 0;
+}
+
+static drmVersion *drmGetVersionFromPath(const char *path)
+{
+    int fd;
+    drmVersion *version;
+
+    fd = open(path, O_RDWR | O_CLOEXEC);
+    if (fd < 0)
+        return NULL;
+    version = drmGetVersion(fd);
+    close(fd);
+
+    return version;
+}
+
+drm_public int drmDevicesQueryAffinity(drmDevice *a, drmDevice *b)
+{
+    drmDevice *render_device, *display_device;
+    drmVersion *render_version, *display_version;
+    bool is_render_only, is_display_only;
+
+    if (drmDevicesEqual(a, b))
+        return 1;
+
+    if (a->bustype != b->bustype)
+        return 0;
+    if (a->bustype != DRM_BUS_PLATFORM)
+        return 0;
+
+    if (a->available_nodes & (1 << DRM_NODE_RENDER)) {
+        render_device = a;
+        display_device = b;
+    } else if (b->available_nodes & (1 << DRM_NODE_RENDER)) {
+        render_device = b;
+        display_device = a;
+    } else {
+        return 0;
+    }
+
+    render_version = drmGetVersionFromPath(render_device->nodes[DRM_NODE_RENDER]);
+    display_version = drmGetVersionFromPath(display_device->nodes[DRM_NODE_PRIMARY]);
+    is_render_only = drmIsRenderOnly(render_version->name);
+    is_display_only = drmIsDisplayOnly(display_version->name);
+    drmFreeVersion(render_version);
+    drmFreeVersion(display_version);
+
+    return is_render_only && is_display_only;
+}
+
 static int drmGetNodeType(const char *name)
 {
     if (strncmp(name, DRM_RENDER_MINOR_NAME,
