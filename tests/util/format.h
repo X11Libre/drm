@@ -50,6 +50,7 @@ struct util_yuv_info {
 	unsigned int xsub;
 	unsigned int ysub;
 	unsigned int chroma_stride;
+	unsigned int offset;
 };
 
 struct util_format_info {

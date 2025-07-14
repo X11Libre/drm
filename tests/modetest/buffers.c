@@ -186,6 +186,12 @@ bo_create(int fd, unsigned int format,
 	case DRM_FORMAT_VYUY:
 	case DRM_FORMAT_YUYV:
 	case DRM_FORMAT_YVYU:
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
+	case DRM_FORMAT_S010:
+	case DRM_FORMAT_S012:
+	case DRM_FORMAT_S016:
 		bpp = 16;
 		break;
 
@@ -231,6 +237,9 @@ bo_create(int fd, unsigned int format,
 	case DRM_FORMAT_NV15:
 	case DRM_FORMAT_YUV420:
 	case DRM_FORMAT_YVU420:
+	case DRM_FORMAT_S010:
+	case DRM_FORMAT_S012:
+	case DRM_FORMAT_S016:
 		is_planar = true;
 		xsub = 2;
 		ysub = 2;
@@ -241,6 +250,9 @@ bo_create(int fd, unsigned int format,
 	case DRM_FORMAT_NV20:
 	case DRM_FORMAT_YUV422:
 	case DRM_FORMAT_YVU422:
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
 		is_planar = true;
 		xsub = 2;
 		ysub = 1;
@@ -303,6 +315,9 @@ bo_create(int fd, unsigned int format,
 	case DRM_FORMAT_NV42:
 	case DRM_FORMAT_NV20:
 	case DRM_FORMAT_NV30:
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
 		offsets[0] = 0;
 		handles[0] = bo->handle;
 		pitches[0] = bo->pitch;
@@ -320,6 +335,9 @@ bo_create(int fd, unsigned int format,
 	case DRM_FORMAT_YVU422:
 	case DRM_FORMAT_YUV444:
 	case DRM_FORMAT_YVU444:
+	case DRM_FORMAT_S010:
+	case DRM_FORMAT_S012:
+	case DRM_FORMAT_S016:
 		offsets[0] = 0;
 		handles[0] = bo->handle;
 		pitches[0] = bo->pitch;

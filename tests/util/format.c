@@ -36,7 +36,9 @@
 	.rgb = { { (rl), (ro) }, { (gl), (go) }, { (bl), (bo) }, { (al), (ao) } }
 
 #define MAKE_YUV_INFO(order, xsub, ysub, chroma_stride) \
-	.yuv = { (order), (xsub), (ysub), (chroma_stride) }
+	.yuv = { (order), (xsub), (ysub), (chroma_stride), 0 }
+#define MAKE_YUV_INFO_OFFSET(order, xsub, ysub, chroma_stride, offset) \
+	.yuv = { (order), (xsub), (ysub), (chroma_stride), (offset) }
 
 static const struct util_format_info format_info[] = {
 	/* Indexed */
@@ -59,9 +61,19 @@ static const struct util_format_info format_info[] = {
 	{ DRM_FORMAT_NV15, "NV15", MAKE_YUV_INFO(YUV_YCbCr, 2, 2, 2) },
 	{ DRM_FORMAT_NV20, "NV20", MAKE_YUV_INFO(YUV_YCbCr, 2, 1, 2) },
 	{ DRM_FORMAT_NV30, "NV30", MAKE_YUV_INFO(YUV_YCbCr, 1, 1, 2) },
+	{ DRM_FORMAT_P010, "P010", MAKE_YUV_INFO_OFFSET(YUV_YCbCr, 2, 2, 2, 8) },
+	{ DRM_FORMAT_P012, "P012", MAKE_YUV_INFO_OFFSET(YUV_YCbCr, 2, 2, 2, 8) },
+	{ DRM_FORMAT_P016, "P016", MAKE_YUV_INFO_OFFSET(YUV_YCbCr, 2, 2, 2, 8) },
 	/* YUV planar */
 	{ DRM_FORMAT_YUV420, "YU12", MAKE_YUV_INFO(YUV_YCbCr, 2, 2, 1) },
 	{ DRM_FORMAT_YVU420, "YV12", MAKE_YUV_INFO(YUV_YCrCb, 2, 2, 1) },
+	{ DRM_FORMAT_YUV422, "YU16", MAKE_YUV_INFO(YUV_YCbCr, 2, 1, 1) },
+	{ DRM_FORMAT_YVU422, "YV16", MAKE_YUV_INFO(YUV_YCrCb, 2, 1, 1) },
+	{ DRM_FORMAT_YUV444, "YU24", MAKE_YUV_INFO(YUV_YCbCr, 1, 1, 1) },
+	{ DRM_FORMAT_YVU444, "YV24", MAKE_YUV_INFO(YUV_YCrCb, 1, 1, 1) },
+	{ DRM_FORMAT_S010, "S010", MAKE_YUV_INFO_OFFSET(YUV_YCbCr, 2, 2, 1, 2) },
+	{ DRM_FORMAT_S012, "S012", MAKE_YUV_INFO_OFFSET(YUV_YCbCr, 2, 2, 1, 4) },
+	{ DRM_FORMAT_S016, "S016", MAKE_YUV_INFO_OFFSET(YUV_YCbCr, 2, 2, 1, 8) },
 	/* RGB8 */
 	{ DRM_FORMAT_RGB332, "RGB8", MAKE_RGB_INFO(3, 5, 3, 2, 2, 0, 0, 0) },
 	{ DRM_FORMAT_BGR233, "BGR8", MAKE_RGB_INFO(3, 0, 3, 3, 2, 6, 0, 0) },
