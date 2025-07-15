@@ -2266,6 +2266,36 @@ static void insert_value_yuv_planar_10bpp(const struct util_format_info *info,
                         0xfffff << bit_start);
 }
 
+static void insert_value_yuv_planar_16bpp(const struct util_format_info *info,
+                                    void *planes[3], unsigned int stride,
+                                    unsigned int x, unsigned int y,
+                                    const struct color_rgba* color)
+{
+	struct color_yuv val = MAKE_YUV_601(color->red, color->green, color->blue);
+	const struct util_yuv_info *yuv = &info->yuv;
+	unsigned int cs = yuv->chroma_stride;
+	unsigned int xsub = yuv->xsub;
+	unsigned int ysub = yuv->ysub;
+	unsigned int chroma_offset = y / ysub;
+	unsigned short *y_mem = planes[0] + (y * stride);
+	unsigned short *u_mem = planes[1] + (chroma_offset * (stride * cs / xsub));
+	unsigned short *v_mem = planes[2] + (chroma_offset * (stride * cs / xsub));
+
+	switch(info->format) {
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
+		v_mem = info->yuv.order & YUV_YCrCb ? u_mem : u_mem + 1;
+		u_mem = info->yuv.order & YUV_YCbCr ? u_mem : u_mem + 1;
+		break;
+	default:
+		break;
+	}
+
+	y_mem[x] = val.y << yuv->offset;
+	u_mem[x/xsub*cs] = val.u << yuv->offset;
+	v_mem[x/xsub*cs] = val.v << yuv->offset;
+}
 
 static void insert_value_rgb32(const struct util_format_info *info,
                                void *planes[3], unsigned int stride,
@@ -2323,6 +2353,14 @@ static void fill_simple_patterns(const struct util_format_info *info,
 	case DRM_FORMAT_NV20:
 	case DRM_FORMAT_NV30:
 		func_insert_value = &insert_value_yuv_planar_10bpp;
+		break;
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
+	case DRM_FORMAT_S010:
+	case DRM_FORMAT_S012:
+	case DRM_FORMAT_S016:
+		func_insert_value = &insert_value_yuv_planar_16bpp;
 		break;
 	case DRM_FORMAT_ARGB8888:
 	case DRM_FORMAT_XRGB8888:
