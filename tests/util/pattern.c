@@ -1957,6 +1957,11 @@ static void insert_value_yuv_planar(const struct util_format_info *info,
 	unsigned char *v_mem = planes[2];
 
 	switch (info->format) {
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_NV21:
+	case DRM_FORMAT_NV16:
+	case DRM_FORMAT_NV61:
+	case DRM_FORMAT_NV24:
 	case DRM_FORMAT_NV42:
 		u_mem = info->yuv.order & YUV_YCbCr ? planes[1] : planes[1] + 1;
 		v_mem = info->yuv.order & YUV_YCrCb ? planes[1] : planes[1] + 1;
