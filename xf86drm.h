@@ -843,6 +843,7 @@ extern char *drmGetRenderDeviceNameFromFd(int fd);
 #define DRM_BUS_USB       1
 #define DRM_BUS_PLATFORM  2
 #define DRM_BUS_HOST1X    3
+#define DRM_BUS_FAUX      4
 
 typedef struct _drmPciBusInfo {
     uint16_t domain;

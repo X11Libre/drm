@@ -3592,6 +3592,7 @@ static int get_subsystem_type(const char *device_path)
         { "/spi", DRM_BUS_PLATFORM },
         { "/host1x", DRM_BUS_HOST1X },
         { "/virtio", DRM_BUS_VIRTIO },
+        { "/faux", DRM_BUS_FAUX },
     };
 
     strncpy(path, device_path, PATH_MAX);
@@ -3794,6 +3795,9 @@ drm_public int drmDevicesEqual(drmDevicePtr a, drmDevicePtr b)
 
     case DRM_BUS_HOST1X:
         return memcmp(a->businfo.host1x, b->businfo.host1x, sizeof(drmHost1xBusInfo)) == 0;
+
+    case DRM_BUS_FAUX:
+        return 0;
 
     default:
         break;
@@ -4080,7 +4084,8 @@ static drmDevicePtr drmDeviceAlloc(unsigned int type, const char *node,
 
     memcpy(device->nodes[type], node, max_node_length);
 
-    *ptrp = ptr;
+    if (ptrp)
+        *ptrp = ptr;
 
     return device;
 }
@@ -4457,6 +4462,24 @@ free_device:
     return ret;
 }
 
+static int drmProcessFauxDevice(drmDevicePtr *device,
+                                const char *node, int node_type,
+                                int maj, int min, bool fetch_deviceinfo,
+                                uint32_t flags)
+{
+    drmDevicePtr dev;
+
+    dev = drmDeviceAlloc(node_type, node, 0, 0, NULL);
+    if (!dev)
+        return -ENOMEM;
+
+    dev->bustype = DRM_BUS_FAUX;
+
+    *device = dev;
+
+    return 0;
+}
+
 static int
 process_device(drmDevicePtr *device, const char *d_name,
                int req_subsystem_type,
@@ -4509,6 +4532,9 @@ process_device(drmDevicePtr *device, const char *d_name,
     case DRM_BUS_HOST1X:
         return drmProcessHost1xDevice(device, node, node_type, maj, min,
                                       fetch_deviceinfo, flags);
+    case DRM_BUS_FAUX:
+        return drmProcessFauxDevice(device, node, node_type, maj, min,
+                                    fetch_deviceinfo, flags);
     default:
         return -1;
    }
