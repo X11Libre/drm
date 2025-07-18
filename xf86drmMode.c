@@ -1036,6 +1036,7 @@ drm_public int drmHandleEvent(int fd, drmEventContextPtr evctx)
 	struct drm_event *e;
 	struct drm_event_vblank *vblank;
 	struct drm_event_crtc_sequence *seq;
+	struct drm_event_atomic_hw_done *atomic_hw_done;
 	void *user_data;
 
 	/* The DRM read semantics guarantees that we always get only
@@ -1087,6 +1088,16 @@ drm_public int drmHandleEvent(int fd, drmEventContextPtr evctx)
 							seq->sequence,
 							seq->time_ns,
 							seq->user_data);
+			break;
+		case DRM_EVENT_ATOMIC_HW_DONE:
+			atomic_hw_done = (struct drm_event_atomic_hw_done *) e;
+			user_data = U642VOID (atomic_hw_done->user_data);
+
+			if (evctx->version >= 5 && evctx->atomic_hw_done_handler)
+				evctx->atomic_hw_done_handler(fd,
+							      atomic_hw_done->tv_sec,
+							      atomic_hw_done->tv_usec,
+							      user_data);
 			break;
 		default:
 			break;

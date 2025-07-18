@@ -770,7 +770,7 @@ extern int drmSetMaster(int fd);
 extern int drmDropMaster(int fd);
 extern int drmIsMaster(int fd);
 
-#define DRM_EVENT_CONTEXT_VERSION 4
+#define DRM_EVENT_CONTEXT_VERSION 5
 
 typedef struct _drmEventContext {
 
@@ -801,6 +801,11 @@ typedef struct _drmEventContext {
 				 uint64_t sequence,
 				 uint64_t ns,
 				 uint64_t user_data);
+
+	void (*atomic_hw_done_handler)(int fd,
+				       unsigned int tv_sec,
+				       unsigned int tv_usec,
+				       void *user_data);
 } drmEventContext, *drmEventContextPtr;
 
 extern int drmHandleEvent(int fd, drmEventContextPtr evctx);
