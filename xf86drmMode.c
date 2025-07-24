@@ -808,7 +808,7 @@ static bool _drmModeFormatModifierGetNext(const drmModePropertyBlobRes *blob,
 		if (iter->fmt_idx < mod->offset ||
 		    iter->fmt_idx >= mod->offset + 64)
 			continue;
-		if (!(mod->formats & (1 << (iter->fmt_idx - mod->offset))))
+		if (!(mod->formats & (1ULL << (iter->fmt_idx - mod->offset))))
 			continue;
 
 		iter->mod = mod->modifier;
