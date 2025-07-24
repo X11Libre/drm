@@ -1704,6 +1704,41 @@ static void fill_tiles_yuv_planar_10bpp(const struct util_format_info *info,
 	}
 }
 
+static void fill_tiles_yuv_planar_16bpp(const struct util_format_info *info,
+					unsigned char *y_mem, unsigned char *u_mem,
+					unsigned char *v_mem, unsigned int width,
+					unsigned int height, unsigned int stride)
+{
+	const struct util_yuv_info *yuv = &info->yuv;
+	unsigned short *y16_mem, *u16_mem, *v16_mem;
+	unsigned int cs = yuv->chroma_stride;
+	unsigned int xsub = yuv->xsub;
+	unsigned int ysub = yuv->ysub;
+	unsigned int x;
+	unsigned int y;
+
+	for (y = 0; y < height; ++y) {
+		y16_mem = (unsigned short*) y_mem;
+		u16_mem = (unsigned short*) u_mem;
+		v16_mem = (unsigned short*) v_mem;
+
+		for (x = 0; x < width; ++x) {
+			struct color_yuv color =
+				make_tiles_yuv_color(x, y, width);
+
+			y16_mem[x] = color.y << yuv->offset;
+			u16_mem[x/xsub*cs] = color.u << yuv->offset;
+			v16_mem[x/xsub*cs] = color.v << yuv->offset;
+		}
+
+		y_mem += stride;
+		if ((y + 1) % ysub == 0) {
+			u_mem += stride * cs / xsub;
+			v_mem += stride * cs / xsub;
+		}
+	}
+}
+
 static void fill_tiles_yuv_packed(const struct util_format_info *info,
 				  void *mem, unsigned int width,
 				  unsigned int height, unsigned int stride)
@@ -1889,6 +1924,14 @@ static void fill_tiles(const struct util_format_info *info, void *planes[3],
 		return fill_tiles_yuv_planar_10bpp(info, planes[0], planes[1],
 						   width, height, stride);
 
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
+		u = info->yuv.order & YUV_YCbCr ? planes[1] : planes[1] + 2;
+		v = info->yuv.order & YUV_YCrCb ? planes[1] : planes[1] + 2;
+		return fill_tiles_yuv_planar_16bpp(info, planes[0], u, v,
+						   width, height, stride);
+
 	case DRM_FORMAT_YUV420:
 	case DRM_FORMAT_YUV422:
 	case DRM_FORMAT_YUV444:
@@ -1901,6 +1944,11 @@ static void fill_tiles(const struct util_format_info *info, void *planes[3],
 		return fill_tiles_yuv_planar(info, planes[0], planes[2],
 					     planes[1], width, height, stride);
 
+	case DRM_FORMAT_S010:
+	case DRM_FORMAT_S012:
+	case DRM_FORMAT_S016:
+		return fill_tiles_yuv_planar_16bpp(info, planes[0], planes[1],
+						   planes[2], width, height, stride);
 	case DRM_FORMAT_RGB332:
 	case DRM_FORMAT_BGR233:
 		return fill_tiles_rgb8(info, planes[0],
