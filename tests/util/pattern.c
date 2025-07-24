@@ -1951,7 +1951,7 @@ static void insert_value_yuv_planar(const struct util_format_info *info,
 	unsigned int cs = yuv->chroma_stride;
 	unsigned int xsub = yuv->xsub;
 	unsigned int ysub = yuv->ysub;
-	unsigned int chroma_offset = (y + 1) / ysub;
+	unsigned int chroma_offset = y / ysub;
 	unsigned char *y_mem = planes[0] + (y * stride);
 	unsigned char *u_mem = planes[1];
 	unsigned char *v_mem = planes[2];
